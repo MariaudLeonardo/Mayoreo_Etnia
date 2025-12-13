@@ -10,6 +10,9 @@
 
 /* -------------------------------------------- VARIABLES -------------------------------------------- */
 :root{
+    --precio_botin_paquete_seis: 510;
+    --precio_botin_paquete_seis: 423;
+
     --color_fondo_header: rgb(240, 240, 240);
     --color_fondo_portada: rgb(220, 220, 220);
     --color_principal: #b9a795;
@@ -200,7 +203,7 @@ header{
 
   display: grid;
   grid-template-rows: repeat(auto-fit, 1fr);
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
 }
 
 /* Producto 0 */
@@ -231,7 +234,6 @@ header{
 .info__item_00 p{
     font-size: var(--tamaño_fuente_precio_producto);
     margin-top: 10px;
-    
 }
 
 .seleccionar__cantidad_00{
