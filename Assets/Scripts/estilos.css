@@ -11,7 +11,7 @@
 /* -------------------------------------------- VARIABLES -------------------------------------------- */
 :root{
     --precio_botin_paquete_seis: 510;
-    --precio_botin_paquete_seis: 423;
+    --precio_botin_paquete_seis: 432;
 
     --color_fondo_header: rgb(240, 240, 240);
     --color_fondo_portada: rgb(220, 220, 220);
@@ -206,77 +206,6 @@ header{
   grid-template-columns: repeat(5, 1fr);
 }
 
-/* Producto 0 */
-
-.container__item_00{
-    width: 100%;
-    margin: 0 auto;
-    padding: 5px;
-    text-align: center;
-}
-
-.img__item_00 img{
-    width: 100%;
-}
-
-.info__item_00 h1{
-    font-size: var(--tamaño_fuente_titulo_producto);
-    font-weight: 200;
-    color: var(--color_fuente_titulo_producto);
-    margin-top: 10px;
-}
-
-.info__item_00 h2{
-    font-size: var(--tamaño_fuente_nombre_producto);
-    margin-top: 10px;
-}
-
-.info__item_00 p{
-    font-size: var(--tamaño_fuente_precio_producto);
-    margin-top: 10px;
-}
-
-.seleccionar__cantidad_00{
-    margin: auto;
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-}
-
-.cantidad__control_00{
-    margin-top: 10px;
-    height: 30px; 
-    width: 100px;
-    background-color: var(--color_fondo_header);
-    border-radius: 12px;
-    border: 2px solid black;
-}
-
-.input__cantidad_00{
-    width: 40px;
-    text-align: center;
-    border-radius: 8px;
-    background-color: transparent;
-    border: transparent;
-}
-
-.btn__cantidad_menos_00, .btn__cantidad_mas_00{
-    width: 20px;
-    height: 100%;
-    background-color: transparent;
-    border: transparent;
-}
-
-.btn__carrito_00{
-    margin-top: 10px;
-    background: transparent;
-    border: 2px solid transparent;
-}
-
-.btn__carrito_00 img{
-    width: 25px;
-}
-
 /* Producto 1 */
 .container__item_01{
     width: 100%;
@@ -295,10 +224,10 @@ header{
 
 .colores__item_01{
     position: absolute; 
-    bottom: 5%; 
+    bottom: 10%; 
     left: 5%;
     display: grid;
-    gap: 10px;
+    gap: 8px;
 
     opacity: 0;
     transition: opacity 300ms ease;
@@ -354,15 +283,19 @@ header{
     width: 100px;
     background-color: var(--color_fondo_header);
     border-radius: 12px;
-    border: 2px solid black;
+    border: 1px solid darkgray;
+    display: flex; 
+    justify-content: space-between; /* Distribuye los botones */
+    align-items: center;
+    overflow: hidden; /* Asegura que nada sobresalga */
 }
 
 .input__cantidad_01{
     width: 40px;
     text-align: center;
-    border-radius: 8px;
-    background-color: transparent;
-    border: transparent;
+    background-color: transparent; 
+    border: none;
+    outline: none;
 }
 
 .btn__cantidad_menos_01, .btn__cantidad_mas_01{
@@ -370,6 +303,10 @@ header{
     height: 100%;
     background-color: transparent;
     border: transparent;
+}
+
+.btn__cantidad_menos_01:hover, .btn__cantidad_mas_01:hover {
+    background-color: rgba(0, 0, 0, 0.1); /* Ligero cambio al pasar el cursor */
 }
 
 .btn__carrito_01{
