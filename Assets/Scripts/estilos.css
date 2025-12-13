@@ -13,10 +13,6 @@
     --precio_botin_paquete_seis: 510;
     --precio_botin_paquete_seis: 432;
 
-    --color_fondo_header: rgb(240, 240, 240);
-    --color_fondo_portada: rgb(220, 220, 220);
-    --color_principal: #b9a795;
-
     --color_uno: #9C6644;
     --color_dos: #F4F3EE;
     --color_tres: #B5AFA9;
@@ -28,7 +24,6 @@
     --tamaño_fuente_parrafo: 20px;
 
     --tamaño_fuente_titulo_producto: 12px;
-    --color_fuente_titulo_producto: #adb5bd;
     --tamaño_fuente_nombre_producto: 18px;
     --tamaño_fuente_precio_producto: 15px;
     
