@@ -17,6 +17,12 @@
     --color_fondo_portada: rgb(220, 220, 220);
     --color_principal: #b9a795;
 
+    --color_uno: #9C6644;
+    --color_dos: #F4F3EE;
+    --color_tres: #B5AFA9;
+    --color_cuatro: #8A817C;
+    --color_cinco: #463F3A;
+
     --tamaño_fuente_titulo: 50px;
     --tamaño_fuente_subtitulo: 35px;
     --tamaño_fuente_parrafo: 20px;
@@ -44,7 +50,7 @@ header{
     display: flex;
     gap: 16px;
     justify-content: space-between;
-    background-color: var(--color_fondo_header);
+    background-color: var(--color_dos);
 }
 
 .layout {
@@ -85,13 +91,13 @@ header{
 }
 
 .menu__tienda nav ul li a{
-    color: black; /* Variable */
-    font-size: 16px; /* Variable */
+    color: black; 
+    font-size: 16px;
     position: relative;
 }
 
 .menu__tienda nav ul li a:hover{
-    color: chocolate;
+    color: var(--color_uno);
 }
 
 .icono__busqueda img{
@@ -118,13 +124,13 @@ header{
 }
 
 .menu__usuario nav ul li a{
-    color: black; /* Variable */
-    font-size: 16px; /* Variable */
+    color: black; 
+    font-size: 16px; 
     position: relative;
 }
 
 .menu__usuario nav ul li a:hover{
-    color: chocolate;
+    color: var(--color_uno);
 }
 
 .icono__usuario img{
@@ -136,7 +142,7 @@ header{
 .container__portada{
     padding-top: 100px;
     padding-bottom: 100px;
-    background: var(--color_fondo_portada);
+    background: var(--color_tres);
 }
 
 .portada{
@@ -155,15 +161,18 @@ header{
 
 .text__portada h1{
     font-size: var(--tamaño_fuente_titulo);
+    color: var(--color_cinco);
 }
 
 .text__portada h2{
     font-size: var(--tamaño_fuente_subtitulo);
+    color: var(--color_cinco);
     margin-top: 10px;
 }
 
 .text__portada p{
     font-size: var(--tamaño_fuente_parrafo);
+    color: var(--color_cinco);
     margin-top: 20px;
 }
 
@@ -173,8 +182,8 @@ header{
     width: 200px;
     padding: 10px 20px;
     text-align: center;
-    color: #EDEDE9;
-    background: var(--color_principal);
+    color: var(--color_dos);
+    background: var(--color_uno);
     
     border: 2px solid transparent;
     cursor: pointer;
@@ -183,8 +192,8 @@ header{
 
 .btn__catalogo:hover{
     background: transparent;
-    color: var(--color_principal);
-    border: 2px solid var(--color_principal);
+    color: var(--color_uno);
+    border: 2px solid var(--color_uno);
 }
 
 .image__portada{
@@ -233,7 +242,22 @@ header{
     transition: opacity 300ms ease;
 }
 
-.img__item_01:hover .colores__item_01 {
+.paquete__item_01{
+    position: absolute; 
+    top: 10%; 
+    right: 5%;
+    display: grid;
+    gap: 8px;
+
+    opacity: 0;
+    transition: opacity 300ms ease;
+}
+
+.img__item_01:hover .colores__item_01{
+    opacity: 1; 
+}
+
+.img__item_01:hover .paquete__item_01{
     opacity: 1; 
 }
 
@@ -251,20 +275,40 @@ header{
     background-color: black;
 }
 
+.btn__paquete_seis{
+    height: 25px;
+    width: 25px;
+    border-radius: 8px;
+    color: var(--color_cuatro);
+    background-color: var(--color_dos);
+    border: 2px solid var(--color_tres);
+}
+
+.btn__paquete_doce{
+    height: 25px;
+    width: 25px;
+    border-radius: 8px;
+    color: var(--color_cuatro);
+    background-color: var(--color_dos);
+    border: 2px solid var(--color_tres);
+}
+
 .info__item_01 h1{
     font-size: var(--tamaño_fuente_titulo_producto);
     font-weight: 200;
-    color: var(--color_fuente_titulo_producto);
+    color: var(--color_tres);
     margin-top: 10px;
 }
 
 .info__item_01 h2{
     font-size: var(--tamaño_fuente_nombre_producto);
+    color: var(--color_cinco);
     margin-top: 10px;
 }
 
 .info__item_01 p{
     font-size: var(--tamaño_fuente_precio_producto);
+    color: var(--color_cinco);
     margin-top: 10px;
     
 }
@@ -281,9 +325,9 @@ header{
     margin-top: 10px;
     height: 30px; 
     width: 100px;
-    background-color: var(--color_fondo_header);
+    background-color: var(--color_dos);
     border-radius: 12px;
-    border: 1px solid darkgray;
+    border: 1px solid var(--color_cuatro);
     display: flex; 
     justify-content: space-between; /* Distribuye los botones */
     align-items: center;
