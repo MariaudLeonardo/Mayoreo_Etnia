@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Emprendimiento Principal</title>
+
+    <link rel="stylesheet" href="Assets\Scripts\estilos.css">
+
+    <link rel="stylesheet" href="https://www.flaticon.es/icon-fonts-mas-descargados?weight=bold&type=uicon.css">
+</head>
+<body>
+
+    <script src="Assets\Scripts\controlador.js"></script>
+
+    <header>
+            <div class="container__header">
+                <section class="layout">
+                    <div class="logo">
+                        <a href="#">
+                            <img src="Assets/Imagenes/Logo/etnia_logo.png" alt="">
+                        </a>
+                    </div>
+
+                    <div class="menu__tienda">
+                        <nav>
+                            <ul>
+                                <li><a href="#">HOME</a></li>
+                                <li><a href="#">POPULARES</a></li>
+                                <li><a href="#">OFERTAS</a></li>
+                                <li><a href="#">FAVORITOS</a></li>
+                                <li><a href="#">
+                                    <div class="icono__busqueda">
+                                        <a href="#">
+                                            <img src="Assets\Imagenes\Iconos\busqueda.png" alt="">
+                                        </a>
+                                    </div>
+                                </a></li>
+                            </ul>
+                        </nav>
+
+                        
+                    </div>
+
+                    <div class="menu__usuario">
+                        <nav>
+                            <ul>
+                                <li><a href="#">CARRITO</a></li>
+                                <li><a href="#">CUENTA</a></li>
+                                <li><a href="#">
+                                    <div class="icono__usuario">
+                                        <a href="#">
+                                            <img src="Assets\Imagenes\Iconos\usuario.png" alt="">
+                                        </a>
+                                    </div>
+                                </a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </section>
+            </div>
+    </header>
+
+    <main>
+        <!-- INICIO -->
+        <!-- Portada de inicio -->
+         <div class="container__portada div__offset" id="inicio">
+            <div class="portada">
+                <section class="text__portada">
+                    <h1>Emprende con Etnia</h1>
+                    <h2>Únete al equipo y comienza a generar ingresos</h2>
+                    <p> Escoge Modelo punto y color<br>
+                        Paquetes de 6 o 12 para cumplir con la promoción<br><br>
+                        Puntos a considerar:<br>
+                         - El cliente cubre gastos de envío<br>
+                         - Consultar si el modelo esta disponible.<br>
+                    </p>
+                    <a href="Assets\Catalogos\EMPRENDE CON ETNIA CATALOGO.pdf" download="EMPRENDE CON ETNIA CATALOGO.pdf" class="btn__catalogo">Descargar catalogo</a>
+                </section>
+
+                <section class="image__portada">
+                    <img src="Assets\Imagenes\Portada\imagen_portada.jpeg" alt="">
+                </section>
+            </div>
+         </div>
+
+        <!-- Productos --> 
+        <section class="layout__productos">
+            <!-- Producto 0 (sin opcion de colores) --> 
+            <section class="container__item_00">
+                <div class="img__item_00">
+                    <figure>
+                        <img src="Assets\Imagenes\Items\Botines\botin_chelse.jpg" alt="">
+                    </figure>
+                </div>
+
+                <!-- <button class="item_00">
+                    <img src="Assets\Imagenes\Items\Botines\botin_chelse.jpg" alt="">
+                </button> --> 
+
+                <section class="info__item_00">
+                    <h1>Botines</h1>
+                    <h2>Botin Chelse</h2>
+                    <p class="precio">$510</p>
+                </section>
+
+                <div class="seleccionar__cantidad_00">
+                    <div class="cantidad__control_00">
+                        <button class="btn__cantidad_menos_00">-</button>
+                        <input type="text" value="1" class="input__cantidad_00">
+                        <button class="btn__cantidad_mas_00">+</button>
+                    </div>
+                    
+                    <button class="btn__carrito_00">
+                        <img src="Assets\Imagenes\Iconos\carrito-de-compras.png" alt="">
+                    </button>
+                </div>
+            </section>
+
+            <!-- Producto 1 (con opcion de colores) -->
+            <section class="container__item_01">
+                <div class="img__item_01">
+                    <figure>
+                        <img id="item_01" src="Assets/Imagenes/Items/Botines/botin_con_hebilla_cafe.jpg" alt="">
+                    </figure>
+
+                    <section class="colores__item_01">
+                        <button 
+                            class="btn__color_cafe"
+                            onclick="establecerImagen('item_01', 'Assets/Imagenes/Items/Botines/botin_con_hebilla_cafe.jpg', 'Botín Café')">
+                        </button>
+                        <button 
+                            class="btn__color_negro"
+                            onclick="establecerImagen('item_01', 'Assets/Imagenes/Items/Botines/botin_con_hebilla_negro.jpg', 'Botín Negro')">
+                        </button>
+                    </section>
+                </div>
+
+                <section class="info__item_01">
+                    <h1>Botines</h1>
+                    <h2>Botin con Hebilla</h2>
+                    <p class="precio">$510</p>
+                </section>
+
+                <div class="seleccionar__cantidad_01">
+                    <div class="cantidad__control_01">
+                        <button 
+                            class="btn__cantidad_menos_01">-</button>
+                        <input id="input_01" type="text" value="1" class="input__cantidad_01">
+                        <button class="btn__cantidad_mas_01">+</button>
+                    </div>
+                    
+                    <button class="btn__carrito_01">
+                        <img src="Assets\Imagenes\Iconos\carrito-de-compras.png" alt="">
+                    </button>
+                </div>
+            </section>
+        </section>
+        
+    </main>
+
+</body>
+</html>
