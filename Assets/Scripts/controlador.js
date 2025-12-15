@@ -15,12 +15,13 @@ let precioCasualPaqueteDoce = 275*12;
 let precioSandaliaConfortPaqueteSeis = 390*6;
 let precioSandaliaConfortPaqueteDoce = 310*12;
 
-// Pues las tallas 
+// Pues las tallas
 let tallas = [21, 21.5, 22, 22.5, 23, 23.5, 24, 24.5, 25, 25.5, 26, 26.5, 27, 27.5, 28, 28.5, 29, 29.5, 30]
 
 let carritoDeCompras = []; // Array para guardar los productos
 
 // Variables de estado del Producto 01 (Valores por defecto)
+
 let infoProductoActual = {
     id: 'item_01',
     nombre: 'Botín con Hebilla',
@@ -28,6 +29,8 @@ let infoProductoActual = {
     color: 'Botín Café',
     paquete: 'seis' // 'seis' o 'doce'
 }
+
+
 
 // --- ESTADO DEL PRODUCTO 01 ---
 // Esta variable recordará cuál es el precio del paquete seleccionado actualmente.
@@ -37,7 +40,7 @@ let precioActualProducto_01 = precioBotinPaqueteSeis;
 /* -------------------------------------------- FUNCIONES -------------------------------------------- */
 
 /**
- * 
+ *
  * @param {*} id Id del componente a modificar
  * @param {*} nuevaRuta Ruta de la imagen a mostrar
  * @param {*} nuevoAlt Nombre
@@ -47,7 +50,6 @@ function establecerImagen(id, nuevaRuta, nuevoAlt) {
     if (imagenElemento) {
         imagenElemento.src = nuevaRuta;
         imagenElemento.alt = nuevoAlt;
-        
         // Guardamos la selección actual para usarla en el carrito
         infoProductoActual.imagen = nuevaRuta;
         infoProductoActual.color = nuevoAlt;
@@ -69,11 +71,11 @@ function cambiarPrecio(idPrecio, paquete) {
 
     // Guardamos el paquete actual
     infoProductoActual.paquete = paquete;
-    
+   
     // Actualizamos variable global de precio (tu lógica anterior)
     if (paquete === 'seis') precioActualProducto_01 = precioBotinPaqueteSeis;
     else if (paquete === 'doce') precioActualProducto_01 = precioBotinPaqueteDoce;
-    
+   
     actualizarSubtotal();
 }
 
@@ -84,7 +86,7 @@ function cambiarPrecio(idPrecio, paquete) {
  */
 function controlarCantidad(idInput, cambio) {
     const input = document.getElementById(idInput);
-    
+   
     // Convertimos el valor actual a número entero
     let valorActual = parseInt(input.value);
 
@@ -163,7 +165,7 @@ function establecerPrecioInicial() {
 
 // Evento de carga
 document.addEventListener('DOMContentLoaded', (event) => {
-    establecerPrecioInicial(); 
+    establecerPrecioInicial();
 });
 
 /* ---------------- SELECCION DE TALLAS ---------------- */
@@ -171,7 +173,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 function abrirModalTallas() {
     const modal = document.getElementById('modal-tallas');
     const grid = document.getElementById('grid-tallas');
-    
+   
     // Limpiar opciones anteriores
     grid.innerHTML = '';
 
@@ -222,7 +224,7 @@ function agregarItemAlCarrito(tallaSeleccionada) {
     // 5. Cerrar modal y resetear
     cerrarModalTallas();
     resetearControlesProducto();
-    
+   
     // Opcional: Abrir el carrito lateral automáticamente para confirmar
     document.getElementById('carrito-lateral').classList.add('activo');
     document.getElementById('carrito-overlay').classList.add('activo');
@@ -233,21 +235,21 @@ function agregarItemAlCarrito(tallaSeleccionada) {
 function renderizarCarritoHTML() {
     const contenedor = document.getElementById('carrito-contenido');
     const elementoTotal = document.getElementById('carrito-precio-final');
-    
+   
     contenedor.innerHTML = ''; // Limpiar carrito visual
     let totalGlobal = 0;
 
     if (carritoDeCompras.length === 0) {
         contenedor.innerHTML = '<p style="text-align: center; margin-top: 20px;">Tu carrito está vacío.</p>';
     } else {
-        carritoDeCompras.forEach((producto, index) => { // 🔑 Usamos 'index' para saber qué elemento eliminar
+        carritoDeCompras.forEach((producto, index) => { // Usamos 'index' para saber qué elemento eliminar
             totalGlobal += producto.precioTotal;
 
             // Crear HTML para cada item
             const itemDiv = document.createElement('div');
             itemDiv.classList.add('item-carrito');
-            
-            // 🔑 Agregamos el botón de eliminar, llamando a la nueva función con el índice
+           
+            // Agregamos el botón de eliminar, llamando a la nueva función con el índice
             itemDiv.innerHTML = `
                 <img src="${producto.imagen}" alt="${producto.color}">
                 <div class="item-info">
@@ -258,7 +260,7 @@ function renderizarCarritoHTML() {
                     <p style="color: var(--color_uno); font-weight: bold;">$${producto.precioTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
                 </div>
                 <button class="btn-eliminar-item" onclick="eliminarItemDelCarrito(${index})">
-                    &times; </button> 
+                    &times; </button>
             `;
             contenedor.appendChild(itemDiv);
         });
@@ -268,6 +270,7 @@ function renderizarCarritoHTML() {
     elementoTotal.textContent = "$" + totalGlobal.toLocaleString('en-US', {minimumFractionDigits: 2});
 }
 
+
 /**
  * Elimina un producto del array carritoDeCompras por su índice
  * y actualiza la vista del carrito.
@@ -276,7 +279,7 @@ function renderizarCarritoHTML() {
 function eliminarItemDelCarrito(index) {
     // 1. Eliminar el producto del array
     // splice(índice, cuántos_eliminar)
-    carritoDeCompras.splice(index, 1); 
+    carritoDeCompras.splice(index, 1);
 
     // 2. Volver a renderizar el carrito para actualizar la lista y el subtotal
     renderizarCarritoHTML();
@@ -327,7 +330,7 @@ function inicializarCarritoLateral() {
 document.addEventListener('DOMContentLoaded', (event) => {
     // Tus funciones anteriores
     establecerPrecioInicial();
-    
+   
     // Nueva función del carrito
     inicializarCarritoLateral();
 });
