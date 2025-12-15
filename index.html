@@ -124,9 +124,20 @@
                 <div class="seleccionar__cantidad_01">
                     <div class="cantidad__control_01">
                         <button 
-                            class="btn__cantidad_menos_01">-</button>
-                        <input id="input_01" type="text" value="1" class="input__cantidad_01">
-                        <button class="btn__cantidad_mas_01">+</button>
+                            class="btn__cantidad_menos_01" 
+                            onclick="controlarCantidad('input_01', -1)">-</button>
+                        
+                        <input 
+                            id="input_01" 
+                            type="text" 
+                            value="1" 
+                            class="input__cantidad_01"
+                            onchange="validarEntrada('input_01')"
+                            onkeypress="return soloNumeros(event)">
+                            
+                        <button 
+                            class="btn__cantidad_mas_01" 
+                            onclick="controlarCantidad('input_01', 1)">+</button>
                     </div>
                     
                     <button class="btn__carrito_01">

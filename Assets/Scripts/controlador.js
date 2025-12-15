@@ -1,3 +1,5 @@
+/* -------------------------------------------- VARIABELS -------------------------------------------- */
+// Precios de productos
 let precioBotinPaqueteSeis = 510*6;
 let precioBotinPaqueteDoce = 432*12;
 
@@ -13,9 +15,15 @@ let precioCasualPaqueteDoce = 275*12;
 let precioSandaliaConfortPaqueteSeis = 390*6;
 let precioSandaliaConfortPaqueteDoce = 310*12;
 
+// Pues las tallas 
 let tallas = [21, 21.5, 22, 22.5, 23, 23.5, 24, 24.5, 25, 25.5, 26, 26.5, 27, 27.5, 28, 28.5, 29, 29.5, 30]
 
-// Funciones
+// --- ESTADO DEL PRODUCTO 01 ---
+// Esta variable recordará cuál es el precio del paquete seleccionado actualmente.
+// Por defecto inicia con el paquete de seis.
+let precioActualProducto_01 = precioBotinPaqueteSeis;
+
+/* -------------------------------------------- FUNCIONES -------------------------------------------- */
 
 /**
  * 
@@ -31,43 +39,107 @@ function establecerImagen(id, nuevaRuta, nuevoAlt) {
     }
 
 /**
- * Establece el precio en el elemento HTML especificado según el paquete.
- * @param {string} id - El ID del elemento <p> del precio (ej: 'precio_item_01').
- * @param {string} paquete - La opción seleccionada: 'seis' o 'doce'.
+ * 1. Selecciona el precio del paquete (6 o 12).
+ * 2. Guarda ese precio en la variable de estado.
+ * 3. Llama a la función que calcula el total.
  */
-function cambiarPrecio(id, paquete) {
-    const elementoPrecio = document.getElementById(id);
-    let precio = 0;
-
-    if (!elementoPrecio) {
-        console.error(`Error: Elemento de precio con ID "${id}" no encontrado.`);
-        return;
-    }
-
+function cambiarPrecio(idPrecio, paquete) {
+    // Actualizamos la variable de estado según el botón presionado
     if (paquete === 'seis') {
-        precio = precioBotinPaqueteSeis;
+        precioActualProducto_01 = precioBotinPaqueteSeis;
     } else if (paquete === 'doce') {
-        precio = precioBotinPaqueteDoce;
+        precioActualProducto_01 = precioBotinPaqueteDoce;
     }
 
-    // Formatear y asignar el nuevo precio
-    elementoPrecio.textContent = "$" + precio.toFixed(2); // .toFixed(2) añade decimales para moneda
+    // Recalculamos el total mostrando el cambio
+    actualizarSubtotal();
 }
 
 /**
- * Función que inicializa los precios al cargar la página (Paquete 6 por defecto).
- * @param {string} id - El ID del elemento <p> del precio.
+ * Controla los botones de + y -
+ * @param {string} idInput - El ID del input de cantidad
+ * @param {number} cambio - (+1 o -1)
  */
-function establecerPrecioInicial(id) {
-    cambiarPrecio(id, 'seis'); // 🔑 Establece el precio inicial al paquete 6
+function controlarCantidad(idInput, cambio) {
+    const input = document.getElementById(idInput);
+    
+    // Convertimos el valor actual a número entero
+    let valorActual = parseInt(input.value);
+
+    // Si no es un número (por error), asumimos 1
+    if (isNaN(valorActual)) valorActual = 1;
+
+    // Calculamos el nuevo valor
+    let nuevoValor = valorActual + cambio;
+
+    // Validación: No permitir menos de 1
+    if (nuevoValor < 1) {
+        nuevoValor = 1;
+    }
+
+    // Actualizamos el input visualmente
+    input.value = nuevoValor;
+
+    // Recalculamos el precio total
+    actualizarSubtotal();
 }
 
-// LLamar funciones inciales
+/**
+ * Valida cuando el usuario escribe directamente en el input
+ */
+function validarEntrada(idInput) {
+    const input = document.getElementById(idInput);
+    let valor = parseInt(input.value);
+
+    // Si no es número o es menor a 1, forzamos a 1
+    if (isNaN(valor) || valor < 1) {
+        valor = 1;
+    }
+
+    input.value = valor;
+    actualizarSubtotal();
+}
+
+/**
+ * Función auxiliar para evitar que escriban letras en el input HTML
+ */
+function soloNumeros(e) {
+    var key = window.Event ? e.which : e.keyCode;
+    return (key >= 48 && key <= 57); // Solo teclas de números
+}
+
+/**
+ * FUNCIÓN CENTRAL DE CÁLCULO
+ * Toma el precio del paquete seleccionado * la cantidad del input
+ * y actualiza el texto en pantalla.
+ */
+function actualizarSubtotal() {
+    // 1. Obtener la cantidad actual del input
+    const input = document.getElementById('input_01');
+    let cantidad = parseInt(input.value);
+    if (isNaN(cantidad)) cantidad = 1;
+
+    // 2. Calcular el total (Precio del paquete guardado * cantidad)
+    const total = precioActualProducto_01 * cantidad;
+
+    // 3. Mostrar el resultado en el párrafo de precio
+    const elementoPrecio = document.getElementById('precio_item_01');
+    if (elementoPrecio) {
+        // Usa toLocaleString para formato de miles (ej: $3,060.00) o toFixed(2)
+        elementoPrecio.textContent = "$" + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+}
+
+/**
+ * Inicialización al cargar la página
+ */
+function establecerPrecioInicial() {
+    // Nos aseguramos que inicie con el precio del paquete de 6
+    precioActualProducto_01 = precioBotinPaqueteSeis;
+    actualizarSubtotal();
+}
+
+// Evento de carga
 document.addEventListener('DOMContentLoaded', (event) => {
-    // Inicializa el precio del Producto 1 (Paquete 6 por defecto)
-    establecerPrecioInicial('precio_item_01'); 
-    
+    establecerPrecioInicial(); 
 });
-
-
-

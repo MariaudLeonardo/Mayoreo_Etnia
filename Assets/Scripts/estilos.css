@@ -270,22 +270,14 @@ header{
     background-color: black;
 }
 
-.btn__paquete_seis{
+.btn__paquete_seis, .btn__paquete_doce {
     height: 25px;
     width: 25px;
     border-radius: 8px;
     color: var(--color_cuatro);
     background-color: var(--color_dos);
     border: 2px solid var(--color_tres);
-}
-
-.btn__paquete_doce{
-    height: 25px;
-    width: 25px;
-    border-radius: 8px;
-    color: var(--color_cuatro);
-    background-color: var(--color_dos);
-    border: 2px solid var(--color_tres);
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .info__item_01 h1{
