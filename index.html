@@ -45,7 +45,7 @@
                     <div class="menu__usuario">
                         <nav>
                             <ul>
-                                <li><a href="#">CARRITO</a></li>
+                                <li><a href="#" id="btn-abrir-carrito">CARRITO</a></li>
                                 <li><a href="#">CUENTA</a></li>
                                 <li><a href="#">
                                     <div class="icono__usuario">
@@ -148,6 +148,28 @@
         </section>
         
     </main>
+
+    <div class="carrito-overlay" id="carrito-overlay"></div>
+
+    <div class="carrito-lateral" id="carrito-lateral">
+        
+        <div class="carrito-header">
+            <h3>Tu Carrito</h3>
+            <button class="btn-cerrar-carrito" id="btn-cerrar-carrito">&times;</button>
+        </div>
+
+        <div class="carrito-body" id="carrito-contenido">
+            <p style="text-align: center; margin-top: 20px;">Tu carrito está vacío por ahora.</p>
+            </div>
+
+        <div class="carrito-footer">
+            <div class="carrito-subtotal">
+                <span>SUBTOTAL:</span>
+                <span id="carrito-precio-final">$0.00</span>
+            </div>
+            <button class="btn-hacer-pedido">HACER PEDIDO</button>
+        </div>
+    </div>
 
 </body>
 </html>

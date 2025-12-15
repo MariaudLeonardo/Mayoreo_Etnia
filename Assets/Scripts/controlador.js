@@ -143,3 +143,39 @@ function establecerPrecioInicial() {
 document.addEventListener('DOMContentLoaded', (event) => {
     establecerPrecioInicial(); 
 });
+
+/* ---------------- LOGICA DEL CARRITO LATERAL ---------------- */
+
+function inicializarCarritoLateral() {
+    const btnAbrir = document.getElementById('btn-abrir-carrito');
+    const btnCerrar = document.getElementById('btn-cerrar-carrito');
+    const overlay = document.getElementById('carrito-overlay');
+    const carritoLateral = document.getElementById('carrito-lateral');
+
+    // Función para abrir
+    if(btnAbrir) {
+        btnAbrir.addEventListener('click', (e) => {
+            e.preventDefault(); // Evita que la página salte al inicio
+            carritoLateral.classList.add('activo');
+            overlay.classList.add('activo');
+        });
+    }
+
+    // Funciones para cerrar (Botón X y clic afuera)
+    function cerrarCarrito() {
+        carritoLateral.classList.remove('activo');
+        overlay.classList.remove('activo');
+    }
+
+    if(btnCerrar) btnCerrar.addEventListener('click', cerrarCarrito);
+    if(overlay) overlay.addEventListener('click', cerrarCarrito);
+}
+
+// Actualizamos el listener principal para incluir la inicialización del carrito
+document.addEventListener('DOMContentLoaded', (event) => {
+    // Tus funciones anteriores
+    establecerPrecioInicial();
+    
+    // Nueva función del carrito
+    inicializarCarritoLateral();
+});

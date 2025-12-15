@@ -349,3 +349,116 @@ header{
 .btn__carrito_01 img{
     width: 25px;
 }
+
+/* -------------------------------------------- MENÚ LATERAL CARRITO -------------------------------------------- */
+
+/* ---------------- CARRITO LATERAL (DRAWER) ---------------- */
+
+/* Fondo oscuro semitransparente detrás del carrito */
+.carrito-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Sombra negra al 50% */
+    z-index: 900; /* Debajo del carrito, encima del sitio */
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+/* El menú lateral en sí */
+.carrito-lateral {
+    position: fixed;
+    top: 0;
+    right: 0; /* Pegado a la derecha */
+    width: 400px; /* Ancho del menú */
+    height: 100%; /* Alto completo */
+    background-color: white;
+    z-index: 1000; /* Lo más alto */
+    box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+    
+    /* Estado inicial: Oculto a la derecha */
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    
+    display: flex;
+    flex-direction: column; /* Para organizar header, body, footer */
+}
+
+/* CLASES ACTIVAS (Se agregan con JS para mostrar el menú) */
+.carrito-lateral.activo {
+    transform: translateX(0); /* Se mueve a su posición original */
+}
+
+.carrito-overlay.activo {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Estilos internos del carrito */
+.carrito-header {
+    padding: 20px;
+    background-color: var(--color_dos);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.carrito-header h3 {
+    color: var(--color_cinco);
+    font-size: 24px;
+}
+
+.btn-cerrar-carrito {
+    background: none;
+    border: none;
+    font-size: 30px;
+    cursor: pointer;
+    color: var(--color_cinco);
+}
+
+.carrito-body {
+    flex-grow: 1; /* Ocupa el espacio disponible en medio */
+    padding: 20px;
+    overflow-y: auto; /* Scroll si hay muchos productos */
+}
+
+.carrito-footer {
+    padding: 20px;
+    background-color: var(--color_dos);
+    border-top: 1px solid #ddd;
+}
+
+.carrito-subtotal {
+    display: flex;
+    justify-content: space-between;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: var(--color_cinco);
+}
+
+.btn-hacer-pedido {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--color_cinco); /* Color oscuro */
+    color: white;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-hacer-pedido:hover {
+    background-color: var(--color_uno); /* Cambia a color café al pasar mouse */
+}
+
+/* Responsivo para celulares */
+@media (max-width: 500px) {
+    .carrito-lateral {
+        width: 100%; /* En celular ocupa toda la pantalla */
+    }
+}
