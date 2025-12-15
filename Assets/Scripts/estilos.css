@@ -550,3 +550,29 @@ header{
 }
 .item-info h4 { font-size: 14px; margin-bottom: 5px; }
 .item-info p { font-size: 12px; color: #666; margin: 2px 0; }
+
+/* Estilo para el botón de eliminar dentro del carrito */
+.btn-eliminar-item {
+    background: none;
+    border: none;
+    color: red;
+    font-size: 20px;
+    cursor: pointer;
+    margin-left: auto; /* Mueve el botón al extremo derecho */
+    padding: 0 5px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.btn-eliminar-item:hover {
+    opacity: 1;
+    color: darkred;
+}
+
+/* Ajuste general para la distribución del ítem */
+.item-carrito {
+    display: flex;
+    gap: 15px;
+    align-items: center; /* Centra verticalmente todos los elementos */
+    /* ... (resto de estilos de .item-carrito) ... */
+}

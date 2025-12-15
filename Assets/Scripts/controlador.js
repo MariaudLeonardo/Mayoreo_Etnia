@@ -228,6 +228,8 @@ function agregarItemAlCarrito(tallaSeleccionada) {
     document.getElementById('carrito-overlay').classList.add('activo');
 }
 
+// Actualiza la función renderizarCarritoHTML en tu controlador.js
+
 function renderizarCarritoHTML() {
     const contenedor = document.getElementById('carrito-contenido');
     const elementoTotal = document.getElementById('carrito-precio-final');
@@ -238,12 +240,14 @@ function renderizarCarritoHTML() {
     if (carritoDeCompras.length === 0) {
         contenedor.innerHTML = '<p style="text-align: center; margin-top: 20px;">Tu carrito está vacío.</p>';
     } else {
-        carritoDeCompras.forEach((producto, index) => {
+        carritoDeCompras.forEach((producto, index) => { // 🔑 Usamos 'index' para saber qué elemento eliminar
             totalGlobal += producto.precioTotal;
 
             // Crear HTML para cada item
             const itemDiv = document.createElement('div');
             itemDiv.classList.add('item-carrito');
+            
+            // 🔑 Agregamos el botón de eliminar, llamando a la nueva función con el índice
             itemDiv.innerHTML = `
                 <img src="${producto.imagen}" alt="${producto.color}">
                 <div class="item-info">
@@ -253,6 +257,8 @@ function renderizarCarritoHTML() {
                     <p>Cant: ${producto.cantidad} x $${(producto.precioTotal / producto.cantidad).toFixed(2)}</p>
                     <p style="color: var(--color_uno); font-weight: bold;">$${producto.precioTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
                 </div>
+                <button class="btn-eliminar-item" onclick="eliminarItemDelCarrito(${index})">
+                    &times; </button> 
             `;
             contenedor.appendChild(itemDiv);
         });
@@ -260,6 +266,20 @@ function renderizarCarritoHTML() {
 
     // Actualizar el precio total del carrito abajo
     elementoTotal.textContent = "$" + totalGlobal.toLocaleString('en-US', {minimumFractionDigits: 2});
+}
+
+/**
+ * Elimina un producto del array carritoDeCompras por su índice
+ * y actualiza la vista del carrito.
+ * @param {number} index - El índice (posición) del elemento a eliminar.
+ */
+function eliminarItemDelCarrito(index) {
+    // 1. Eliminar el producto del array
+    // splice(índice, cuántos_eliminar)
+    carritoDeCompras.splice(index, 1); 
+
+    // 2. Volver a renderizar el carrito para actualizar la lista y el subtotal
+    renderizarCarritoHTML();
 }
 
 function resetearControlesProducto() {
