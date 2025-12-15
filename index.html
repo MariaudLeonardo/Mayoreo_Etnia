@@ -140,9 +140,18 @@
                             onclick="controlarCantidad('input_01', 1)">+</button>
                     </div>
                     
-                    <button class="btn__carrito_01">
-                        <img src="Assets\Imagenes\Iconos\carrito-de-compras.png" alt="">
+                    <button class="btn__carrito_01" onclick="abrirModalTallas()">
+                        <img src="Assets/Imagenes/Iconos/carrito-de-compras.png" alt="Agregar">
                     </button>
+
+                    <div id="modal-tallas" class="modal-tallas-overlay">
+                        <div class="modal-tallas-content">
+                            <span class="btn-cerrar-modal" onclick="cerrarModalTallas()">&times;</span>
+                            <h3>Selecciona tu talla</h3>
+                            
+                            <div id="grid-tallas" class="grid-tallas"></div>
+                        </div>
+                    </div>
                 </div>
             </article>
         </section>

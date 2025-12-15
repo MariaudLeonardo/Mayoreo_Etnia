@@ -350,9 +350,72 @@ header{
     width: 25px;
 }
 
-/* -------------------------------------------- MENÚ LATERAL CARRITO -------------------------------------------- */
+/* --- MODAL DE TALLAS --- */
+.modal-tallas-overlay {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    z-index: 2000; /* Encima de todo */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6); /* Fondo oscuro */
+    justify-content: center;
+    align-items: center;
+}
 
-/* ---------------- CARRITO LATERAL (DRAWER) ---------------- */
+.modal-tallas-content {
+    background-color: #fefefe;
+    padding: 30px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.modal-tallas-content h3 {
+    margin-bottom: 10px;
+    color: var(--color_cinco);
+}
+
+.btn-cerrar-modal {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn-cerrar-modal:hover { color: black; }
+
+/* GRID DE BOTONES DE TALLAS */
+.grid-tallas {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 columnas */
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-talla {
+    padding: 10px;
+    background-color: white;
+    border: 1px solid var(--color_cinco);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.btn-talla:hover {
+    background-color: var(--color_cinco);
+    color: white;
+}
+
+/* -------------------------------------------- MENÚ LATERAL CARRITO -------------------------------------------- */
 
 /* Fondo oscuro semitransparente detrás del carrito */
 .carrito-overlay {
@@ -462,3 +525,28 @@ header{
         width: 100%; /* En celular ocupa toda la pantalla */
     }
 }
+
+/* --- SCROLL DEL CARRITO LATERAL --- */
+.carrito-body {
+    flex-grow: 1; 
+    padding: 20px;
+    overflow-y: auto; /* 🔑 Habilita el scroll vertical si hay muchos items */
+    max-height: 70vh; /* Altura máxima para asegurar que quepa en pantalla */
+}
+
+/* Diseño de item dentro del carrito */
+.item-carrito {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+.item-carrito img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+.item-info h4 { font-size: 14px; margin-bottom: 5px; }
+.item-info p { font-size: 12px; color: #666; margin: 2px 0; }

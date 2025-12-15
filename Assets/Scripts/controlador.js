@@ -18,6 +18,17 @@ let precioSandaliaConfortPaqueteDoce = 310*12;
 // Pues las tallas 
 let tallas = [21, 21.5, 22, 22.5, 23, 23.5, 24, 24.5, 25, 25.5, 26, 26.5, 27, 27.5, 28, 28.5, 29, 29.5, 30]
 
+let carritoDeCompras = []; // Array para guardar los productos
+
+// Variables de estado del Producto 01 (Valores por defecto)
+let infoProductoActual = {
+    id: 'item_01',
+    nombre: 'Botín con Hebilla',
+    imagen: 'Assets/Imagenes/Items/Botines/botin_con_hebilla_cafe.jpg', // Ruta inicial
+    color: 'Botín Café',
+    paquete: 'seis' // 'seis' o 'doce'
+}
+
 // --- ESTADO DEL PRODUCTO 01 ---
 // Esta variable recordará cuál es el precio del paquete seleccionado actualmente.
 // Por defecto inicia con el paquete de seis.
@@ -32,11 +43,16 @@ let precioActualProducto_01 = precioBotinPaqueteSeis;
  * @param {*} nuevoAlt Nombre
  */
 function establecerImagen(id, nuevaRuta, nuevoAlt) {
-        const imagenElemento = document.getElementById(id);
-        
+    const imagenElemento = document.getElementById(id);
+    if (imagenElemento) {
         imagenElemento.src = nuevaRuta;
         imagenElemento.alt = nuevoAlt;
+        
+        // Guardamos la selección actual para usarla en el carrito
+        infoProductoActual.imagen = nuevaRuta;
+        infoProductoActual.color = nuevoAlt;
     }
+}
 
 /**
  * 1. Selecciona el precio del paquete (6 o 12).
@@ -51,7 +67,13 @@ function cambiarPrecio(idPrecio, paquete) {
         precioActualProducto_01 = precioBotinPaqueteDoce;
     }
 
-    // Recalculamos el total mostrando el cambio
+    // Guardamos el paquete actual
+    infoProductoActual.paquete = paquete;
+    
+    // Actualizamos variable global de precio (tu lógica anterior)
+    if (paquete === 'seis') precioActualProducto_01 = precioBotinPaqueteSeis;
+    else if (paquete === 'doce') precioActualProducto_01 = precioBotinPaqueteDoce;
+    
     actualizarSubtotal();
 }
 
@@ -143,6 +165,116 @@ function establecerPrecioInicial() {
 document.addEventListener('DOMContentLoaded', (event) => {
     establecerPrecioInicial(); 
 });
+
+/* ---------------- SELECCION DE TALLAS ---------------- */
+
+function abrirModalTallas() {
+    const modal = document.getElementById('modal-tallas');
+    const grid = document.getElementById('grid-tallas');
+    
+    // Limpiar opciones anteriores
+    grid.innerHTML = '';
+
+    // Generar botones de tallas dinámicamente
+    tallas.forEach(talla => {
+        const btn = document.createElement('button');
+        btn.textContent = talla;
+        btn.classList.add('btn-talla');
+        // Al hacer clic en una talla, se agrega al carrito
+        btn.onclick = () => agregarItemAlCarrito(talla);
+        grid.appendChild(btn);
+    });
+
+    modal.style.display = 'flex'; // Mostrar modal
+}
+
+function cerrarModalTallas() {
+    document.getElementById('modal-tallas').style.display = 'none';
+}
+
+/**
+ * LÓGICA PRINCIPAL: Agrega el producto al array y actualiza el HTML
+ */
+function agregarItemAlCarrito(tallaSeleccionada) {
+    // 1. Obtener cantidad y calcular precio final de esta línea
+    const inputCantidad = document.getElementById('input_01');
+    const cantidad = parseInt(inputCantidad.value);
+    const precioUnitario = infoProductoActual.paquete === 'seis' ? precioBotinPaqueteSeis : precioBotinPaqueteDoce;
+    const precioTotalLinea = precioUnitario * cantidad;
+
+    // 2. Crear objeto del producto
+    const nuevoProducto = {
+        nombre: infoProductoActual.nombre,
+        imagen: infoProductoActual.imagen,
+        color: infoProductoActual.color,
+        paquete: infoProductoActual.paquete,
+        cantidad: cantidad,
+        talla: tallaSeleccionada,
+        precioTotal: precioTotalLinea
+    };
+
+    // 3. Agregar al array del carrito
+    carritoDeCompras.push(nuevoProducto);
+
+    // 4. Renderizar (pintar) el carrito en el HTML
+    renderizarCarritoHTML();
+
+    // 5. Cerrar modal y resetear
+    cerrarModalTallas();
+    resetearControlesProducto();
+    
+    // Opcional: Abrir el carrito lateral automáticamente para confirmar
+    document.getElementById('carrito-lateral').classList.add('activo');
+    document.getElementById('carrito-overlay').classList.add('activo');
+}
+
+function renderizarCarritoHTML() {
+    const contenedor = document.getElementById('carrito-contenido');
+    const elementoTotal = document.getElementById('carrito-precio-final');
+    
+    contenedor.innerHTML = ''; // Limpiar carrito visual
+    let totalGlobal = 0;
+
+    if (carritoDeCompras.length === 0) {
+        contenedor.innerHTML = '<p style="text-align: center; margin-top: 20px;">Tu carrito está vacío.</p>';
+    } else {
+        carritoDeCompras.forEach((producto, index) => {
+            totalGlobal += producto.precioTotal;
+
+            // Crear HTML para cada item
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('item-carrito');
+            itemDiv.innerHTML = `
+                <img src="${producto.imagen}" alt="${producto.color}">
+                <div class="item-info">
+                    <h4>${producto.nombre}</h4>
+                    <p>Color: ${producto.color}</p>
+                    <p>Talla: <strong>${producto.talla}</strong> | Paq: ${producto.paquete === 'seis' ? '6' : '12'}</p>
+                    <p>Cant: ${producto.cantidad} x $${(producto.precioTotal / producto.cantidad).toFixed(2)}</p>
+                    <p style="color: var(--color_uno); font-weight: bold;">$${producto.precioTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+                </div>
+            `;
+            contenedor.appendChild(itemDiv);
+        });
+    }
+
+    // Actualizar el precio total del carrito abajo
+    elementoTotal.textContent = "$" + totalGlobal.toLocaleString('en-US', {minimumFractionDigits: 2});
+}
+
+function resetearControlesProducto() {
+    // 1. Resetear cantidad a 1
+    const input = document.getElementById('input_01');
+    input.value = 1;
+
+    // 2. Resetear paquete a 'seis' (Opcional, depende de tu gusto)
+    // Para hacer esto visualmente, simulamos click en el botón de paquete 6
+    const btnSeis = document.querySelector('.btn__paquete_seis');
+    if(btnSeis) btnSeis.click(); // Esto dispara cambiarPrecio y resetea estilos y lógica
+
+    // 3. Recalcular subtotal de la vista del producto
+    actualizarSubtotal();
+}
 
 /* ---------------- LOGICA DEL CARRITO LATERAL ---------------- */
 
