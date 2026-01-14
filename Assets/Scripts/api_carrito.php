@@ -73,8 +73,7 @@ if ($accion === 'eliminar_grupo') {
 
 if ($accion === 'obtener_carrito') {
     $idUsuario = $_SESSION['id_usuario'];
-    
-    // Consulta mejorada para traer la imagen ligada al color
+
     $sql = "SELECT 
                 cz.*, 
                 z.nombre AS zapato_nombre, 
@@ -84,9 +83,7 @@ if ($accion === 'obtener_carrito') {
                     SELECT ruta 
                     FROM imagenes_zapato 
                     WHERE id_zapato = cz.id_zapato 
-                    -- PRIORIDAD: Que coincida el color o que sea NULL si el zapato no tiene colores
                     AND (id_color = cz.id_color OR id_color IS NULL) 
-                    -- Ordenamos para que las coincidencias de color aparezcan primero, luego por orden 1, 2...
                     ORDER BY (id_color = cz.id_color) DESC, orden ASC 
                     LIMIT 1
                 ) AS ruta_imagen
@@ -100,29 +97,34 @@ if ($accion === 'obtener_carrito') {
     $res = $conexion->query($sql);
     $carritoFormateado = [];
 
+    // URL base para que las imágenes carguen en todas las páginas (Ofertas, Populares, etc.)
+    $urlBase = "/Mayoreo_Etnia/"; 
+
     if ($res) {
         while ($fila = $res->fetch_assoc()) {
             $idG = $fila['id_grupo'];
-            
+
             if (!isset($carritoFormateado[$idG])) {
+                $rutaLimpia = ltrim($fila['ruta_imagen'], '/');
+
                 $carritoFormateado[$idG] = [
-                    'id_grupo'      => $idG,
-                    'id'            => $fila['id_zapato'],
-                    'nombre'        => $fila['zapato_nombre'],
-                    // Mapeamos la ruta de imagen específica del color
-                    'imagen'        => $fila['ruta_imagen'], 
-                    'paquete'       => $fila['tipo_paquete'],
-                    'color'         => $fila['color_nombre'] ?? 'Estándar',
-                    'precioTotal'   => 0,
+                    'id_grupo' => $idG,
+                    'id' => $fila['id_zapato'],
+                    'nombre' => $fila['zapato_nombre'],
+                    // Usamos ruta absoluta para evitar iconos rotos fuera del index
+                    'imagen' => $urlBase . $rutaLimpia, 
+                    'paquete' => $fila['tipo_paquete'],
+                    'color' => $fila['color_nombre'] ?? 'Estándar',
+                    'precioTotal' => 0,
                     'cantidadTotal' => 0,
-                    'desgloseTallas'=> []
+                    'desgloseTallas' => []
                 ];
             }
-            
-            // Agrupación de tallas y sumas
+
             $talla = $fila['talla_valor'];
             $carritoFormateado[$idG]['desgloseTallas'][$talla] = intval($fila['cantidad']);
-            $carritoFormateado[$idG]['precioTotal'] += floatval($fila['subtotal']);
+            // Sumamos el subtotal real de la fila (ej. 2065.50)
+            $carritoFormateado[$idG]['precioTotal'] += floatval($fila['subtotal']); 
             $carritoFormateado[$idG]['cantidadTotal'] += intval($fila['cantidad']);
         }
     }

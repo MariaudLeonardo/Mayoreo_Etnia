@@ -1,5 +1,10 @@
 /* -------------------------------------------- VARIABLES -------------------------------------------- */
 
+const CONFIG_PROYECTO = {
+    root: '/Mayoreo_Etnia/',
+    api: '/Mayoreo_Etnia/Assets/Scripts/api_carrito.php'
+};
+
 // Variables para el modal de producto
 var idZapatoActual = 0;
 var nombreZapatoActual = "";
@@ -42,12 +47,15 @@ function establecerImagen(idElemento, nuevaRuta, nuevoAlt) {
 }
 
 function cambiarPrecio(idPrecio, paquete, idProducto) {
-    // ... (Tu lógica existente de cambiarPrecio en tarjeta) ...
-    // (Pega tu función cambiarPrecio aquí, es la misma de la respuesta anterior)
     const elementoPrecio = document.getElementById(idPrecio);
     if (!elementoPrecio) return;
+
+    // 1. OBTENER PRECIO INDIVIDUAL (Tu lógica original intacta)
     let precioIndividual = parseFloat(elementoPrecio.getAttribute('data-precio-individual'));
-    if (isNaN(precioIndividual) || precioIndividual === 0) precioIndividual = parseFloat(elementoPrecio.getAttribute('data-precio-base'));
+    if (isNaN(precioIndividual) || precioIndividual === 0) {
+        precioIndividual = parseFloat(elementoPrecio.getAttribute('data-precio-base'));
+    }
+
     if (isNaN(precioIndividual) || precioIndividual === 0) {
         const precioActual = parseFloat(elementoPrecio.textContent.replace('$', '').replace(',', ''));
         const paqueteActual = elementoPrecio.getAttribute('data-paquete-actual') || 'seis';
@@ -55,10 +63,26 @@ function cambiarPrecio(idPrecio, paquete, idProducto) {
         if (isNaN(precioIndividual)) precioIndividual = precioActual;
         elementoPrecio.setAttribute('data-precio-individual', precioIndividual);
     }
-    let precioFinal = (paquete === 'seis') ? precioIndividual * 6 * 0.9 : (paquete === 'doce' ? precioIndividual * 12 * 0.8 : precioIndividual);
-    elementoPrecio.textContent = '$' + precioFinal.toFixed(2);
+
+    // 2. OBTENER LA CANTIDAD DE PAQUETES ACTUAL (La corrección)
+    // Buscamos el input de cantidad para saber si hay 1, 5 o 10 paquetes seleccionados
+    const inputCantidad = document.getElementById(`input_${idProducto}`);
+    const cantPaquetes = inputCantidad ? (parseInt(inputCantidad.value) || 1) : 1;
+
+    // 3. CÁLCULO DE PRECIO POR PAQUETE
+    let precioUnPaquete = (paquete === 'seis') ? precioIndividual * 6 * 0.9 : (paquete === 'doce' ? precioIndividual * 12 * 0.8 : precioIndividual);
+    
+    // 4. CÁLCULO DEL TOTAL REAL (Precio paquete x Cantidad seleccionada)
+    let totalFinal = precioUnPaquete * cantPaquetes;
+
+    // 5. ACTUALIZAR UI (Usamos toLocaleString para que se vea profesional con comas)
+    elementoPrecio.textContent = '$' + totalFinal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    // 6. ACTUALIZAR ATRIBUTOS (Para que el carrito lea los valores correctos)
     elementoPrecio.setAttribute('data-paquete-actual', paquete);
-    elementoPrecio.setAttribute('data-precio-paquete', precioFinal);
+    elementoPrecio.setAttribute('data-precio-paquete', precioUnPaquete); // Guardamos lo que vale 1 paquete solo
+
+    // 7. GESTIÓN DE BOTONES ACTIVOS (Tu lógica original)
     const contenedor = document.querySelector(`.container__item_01 #precio_item_${idProducto}`)?.closest('.container__item_01');
     if (contenedor) {
         contenedor.querySelectorAll('.btn__paquete_seis, .btn__paquete_doce').forEach(btn => btn.classList.remove('activo'));
@@ -92,19 +116,38 @@ function actualizarPrecioTarjeta(idProducto) {
     const elementoPrecio = document.getElementById(`precio_item_${idProducto}`);
     const inputCantidad = document.getElementById(`input_${idProducto}`);
     const contenedor = elementoPrecio?.closest('.container__item_01');
+
     if (!elementoPrecio || !inputCantidad || !contenedor) return;
 
+    // 1. Obtener el precio base por par
     let precioIndividual = parseFloat(elementoPrecio.getAttribute('data-precio-individual'));
-    if (isNaN(precioIndividual) || precioIndividual === 0) precioIndividual = parseFloat(elementoPrecio.getAttribute('data-precio-base'));
+    if (isNaN(precioIndividual) || precioIndividual === 0) {
+        precioIndividual = parseFloat(elementoPrecio.getAttribute('data-precio-base'));
+    }
 
+    // 2. Determinar el tipo de paquete activo (6 o 12)
     const esDoce = contenedor.querySelector('.btn__paquete_doce').classList.contains('activo');
     const pares = esDoce ? 12 : 6;
-    const factor = esDoce ? 0.8 : 0.9;
-    const cant = parseInt(inputCantidad.value) || 1;
+    const factor = esDoce ? 0.8 : 0.9; // 20% desc para 12 pares, 10% desc para 6 pares
+    
+    // 3. Obtener la cantidad de paquetes desde el input
+    const cantPaquetes = parseInt(inputCantidad.value) || 1;
 
-    const total = precioIndividual * pares * factor * cant;
-    elementoPrecio.textContent = '$' + total.toLocaleString('en-US', { minimumFractionDigits: 2 });
-    elementoPrecio.setAttribute('data-precio-paquete', total);
+    // 4. Calcular el precio de UN SOLO PAQUETE
+    const precioUnPaquete = precioIndividual * pares * factor;
+
+    // 5. Calcular el TOTAL (Precio paquete x Cantidad de paquetes)
+    const totalFinal = precioUnPaquete * cantPaquetes;
+
+    // 6. ACTUALIZAR UI: Mostramos el total con formato de moneda (comas y puntos)
+    elementoPrecio.textContent = '$' + totalFinal.toLocaleString('en-US', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+    });
+
+    // 7. ACTUALIZAR ATRIBUTOS: 
+    // Guardamos el precio de UN paquete para que el carrito haga su propia multiplicación después
+    elementoPrecio.setAttribute('data-precio-paquete', precioUnPaquete);
 }
 
 
@@ -873,19 +916,23 @@ function renderizarCarritoHTML() {
         return;
     }
 
-    // 4. Dibujar los productos (Aquí es donde definimos 'producto')
+    // 4. Dibujar los productos
     carritoDeCompras.forEach((producto, index) => {
-        // Acumular total global asegurando que sea número
-        totalGlobal += parseFloat(producto.precioTotal) || 0;
+        // Acumular total global asegurando que sea número (Evita el error de $0.00)
+        // Tomamos el precioTotal que el PHP calculó desde la columna 'subtotal' de la BD
+        const subtotalProducto = parseFloat(producto.precioTotal) || 0;
+        totalGlobal += subtotalProducto;
 
-        // FIX DE RUTAS Y UNDEFINED: Definidos aquí dentro del bucle
-        const rutaImagen = producto.imagen || 'Assets/Imagenes/default.png';
+        // FIX DE RUTAS: Usamos la ruta absoluta que viene del PHP (/Mayoreo_Etnia/...)
+        // Esto garantiza que la imagen cargue en Index, Ofertas o Populares
+        const rutaImagen = producto.imagen || '/Mayoreo_Etnia/Assets/Imagenes/default.png';
         const nombreColor = producto.color || 'Estándar';
 
         // LÓGICA DE PAQUETES
         const basePaquete = (producto.paquete === 'seis') ? 6 : 12;
         const numPaquetes = producto.cantidadTotal / basePaquete;
-        const precioPorPaquete = (numPaquetes > 0) ? (producto.precioTotal / numPaquetes) : 0;
+        // Calculamos el precio de un solo paquete para el desglose visual
+        const precioPorPaquete = (numPaquetes > 0) ? (subtotalProducto / numPaquetes) : 0;
 
         // GENERAR TAGS DE TALLAS ORDENADAS
         const tallasOrdenadas = Object.keys(producto.desgloseTallas || {}).sort((a, b) => parseFloat(a) - parseFloat(b));
@@ -900,7 +947,7 @@ function renderizarCarritoHTML() {
         }
         htmlTallas += '</div>';
 
-        // 5. CONSTRUIR ELEMENTO HTML (Definimos 'itemDiv' aquí)
+        // 5. CONSTRUIR ELEMENTO HTML
         const itemDiv = document.createElement('div');
         itemDiv.classList.add('item-carrito');
         itemDiv.innerHTML = `
@@ -915,7 +962,7 @@ function renderizarCarritoHTML() {
                     <span class="info-paq">${numPaquetes} Paq. (${basePaquete} pares c/u)</span><br>
                     <span class="info-calculo">${numPaquetes} x $${precioPorPaquete.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </p>
-                <p class="precio-final-item">$${producto.precioTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                <p class="precio-final-item">$${subtotalProducto.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
             </div>
             <button class="btn-eliminar-item" onclick="eliminarGrupoDelCarrito('${producto.id_grupo}')">&times;</button>
         `;
