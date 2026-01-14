@@ -14,7 +14,7 @@ function js_escape($string)
 $sql = "
 SELECT 
     z.id_zapato,
-    z.id_categoria, -- Agregamos el ID para que JS lo conozca
+    z.id_categoria,
     z.nombre,
     z.precio,
     c.nombre AS nombre_categoria,

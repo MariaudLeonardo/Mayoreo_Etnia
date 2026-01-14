@@ -9,7 +9,7 @@ $categoriasSeleccionadas = isset($_GET['cats']) ? $_GET['cats'] : [];
 // CONSTRUIR CONSULTA SQL DINÁMICA
 $sql = "
 SELECT 
-    z.id_zapato, z.nombre, z.precio, c.nombre AS nombre_categoria,
+    z.id_zapato, z.nombre, z.precio, z.id_categoria, c.nombre AS nombre_categoria,
     o.porcentaje AS descuento
 FROM zapatos z
 INNER JOIN categorias c ON z.id_categoria = c.id_categoria

@@ -1,9 +1,11 @@
 /* -------------------------------------------- VARIABLES -------------------------------------------- */
 
-const CONFIG_PROYECTO = {
-    root: '/Mayoreo_Etnia/',
-    api: '/Mayoreo_Etnia/Assets/Scripts/api_carrito.php'
-};
+// 1. Definimos la carpeta raíz del proyecto (Ajusta si cambias el nombre de la carpeta en htdocs)
+const ROOT_PATH = '/Mayoreo_Etnia/';
+
+// 2. Definimos las rutas EXACTAS a las APIs (Rutas Absolutas)
+const API_CARRITO = ROOT_PATH + 'Assets/Scripts/api_carrito.php';
+const API_FAVORITOS = ROOT_PATH + 'Assets/Scripts/api_favoritos.php';
 
 // Variables para el modal de producto
 var idZapatoActual = 0;
@@ -71,13 +73,13 @@ function cambiarPrecio(idPrecio, paquete, idProducto) {
 
     // 3. CÁLCULO DE PRECIO POR PAQUETE
     let precioUnPaquete = (paquete === 'seis') ? precioIndividual * 6 * 0.9 : (paquete === 'doce' ? precioIndividual * 12 * 0.8 : precioIndividual);
-    
+
     // 4. CÁLCULO DEL TOTAL REAL (Precio paquete x Cantidad seleccionada)
     let totalFinal = precioUnPaquete * cantPaquetes;
 
     // 5. ACTUALIZAR UI (Usamos toLocaleString para que se vea profesional con comas)
     elementoPrecio.textContent = '$' + totalFinal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    
+
     // 6. ACTUALIZAR ATRIBUTOS (Para que el carrito lea los valores correctos)
     elementoPrecio.setAttribute('data-paquete-actual', paquete);
     elementoPrecio.setAttribute('data-precio-paquete', precioUnPaquete); // Guardamos lo que vale 1 paquete solo
@@ -129,7 +131,7 @@ function actualizarPrecioTarjeta(idProducto) {
     const esDoce = contenedor.querySelector('.btn__paquete_doce').classList.contains('activo');
     const pares = esDoce ? 12 : 6;
     const factor = esDoce ? 0.8 : 0.9; // 20% desc para 12 pares, 10% desc para 6 pares
-    
+
     // 3. Obtener la cantidad de paquetes desde el input
     const cantPaquetes = parseInt(inputCantidad.value) || 1;
 
@@ -140,9 +142,9 @@ function actualizarPrecioTarjeta(idProducto) {
     const totalFinal = precioUnPaquete * cantPaquetes;
 
     // 6. ACTUALIZAR UI: Mostramos el total con formato de moneda (comas y puntos)
-    elementoPrecio.textContent = '$' + totalFinal.toLocaleString('en-US', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
+    elementoPrecio.textContent = '$' + totalFinal.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
     });
 
     // 7. ACTUALIZAR ATRIBUTOS: 
@@ -503,7 +505,7 @@ function confirmarYAgregarAlCarrito() {
     };
 
     // 3. ÚNICA LLAMADA AL SERVIDOR
-    fetch(rutaCarritoAJAX, {
+    fetch(API_CARRITO, {  // <--- CAMBIO AQUÍ
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -511,6 +513,7 @@ function confirmarYAgregarAlCarrito() {
             producto: productoParaServer
         })
     })
+
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
@@ -532,7 +535,7 @@ function eliminarGrupoDelCarrito(idGrupo) {
     // Hemos eliminado la línea del confirm() para que el borrado sea directo
 
     // 1. Llamada a la base de datos para borrar el grupo
-    fetch(rutaCarritoAJAX, {
+    fetch(API_CARRITO, { // <--- CAMBIO AQUÍ
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -562,7 +565,7 @@ function cargarCarritoDesdeBD() {
     // Solo intentamos cargar si hay un usuario logueado
     if (typeof usuarioLogueado === 'undefined' || !usuarioLogueado) return;
 
-    fetch(rutaCarritoAJAX, {
+    fetch(API_CARRITO, { // <--- CAMBIO AQUÍ
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accion: 'obtener_carrito' })
@@ -675,15 +678,13 @@ function abrirModalProducto(producto) {
 function verificarEstadoFavorito(idZapato) {
     const btn = document.getElementById('btn-favorito-modal');
     if (!btn) return;
-
-    // 1. Limpiamos la estrella (estado por defecto: vacía)
     btn.classList.remove('activo');
 
-    // 2. Si no hay sesión, no revisamos nada
     if (typeof usuarioLogueado === 'undefined' || !usuarioLogueado) return;
 
+
     // 3. CAMBIO CLAVE: Usar la ruta dinámica
-    const urlDestino = (typeof rutaFavoritosAJAX !== 'undefined') ? rutaFavoritosAJAX : 'Assets/Scripts/api_favoritos.php';
+    const urlDestino = API_FAVORITOS;
 
     const formData = new FormData();
     formData.append('accion', 'verificar');
@@ -702,9 +703,10 @@ function verificarEstadoFavorito(idZapato) {
 
 // 2. Acción al hacer clic en la estrella
 function toggleFavoritoModal() {
-    if (!usuarioLogueado) {
+    if (typeof usuarioLogueado === 'undefined' || !usuarioLogueado) { // Validación segura
         alert("Inicia sesión para guardar tus favoritos.");
-        abrirModalAuth();
+        // Asegúrate de que abrirModalAuth exista o redirige al login
+        if(typeof abrirModalAuth === 'function') abrirModalAuth();
         return;
     }
 
@@ -714,7 +716,7 @@ function toggleFavoritoModal() {
     formData.append('id_zapato', idZapatoActualEnModal);
 
     // USAR LA VARIABLE DINÁMICA DE RUTA
-    const urlDestino = (typeof rutaFavoritosAJAX !== 'undefined') ? rutaFavoritosAJAX : 'Assets/Scripts/api_favoritos.php';
+    const urlDestino = API_FAVORITOS
 
     fetch(urlDestino, { method: 'POST', body: formData })
         .then(r => r.json())
