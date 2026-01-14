@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1:3308
--- Tiempo de generación: 17-12-2025 a las 02:55:29
+-- Tiempo de generación: 14-01-2026 a las 06:41:01
 -- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.0.30
+-- Versión de PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -24,28 +24,28 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `carrito`
---
-
-CREATE TABLE `carrito` (
-  `id_carrito` int(11) NOT NULL,
-  `id_usuario` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
 -- Estructura de tabla para la tabla `carrito_zapato`
 --
 
 CREATE TABLE `carrito_zapato` (
   `id` int(11) NOT NULL,
-  `id_carrito` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `id_grupo` varchar(50) DEFAULT NULL,
   `id_zapato` int(11) NOT NULL,
   `id_talla` int(11) NOT NULL,
-  `id_color` int(11) NOT NULL,
-  `cantidad` int(11) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id_color` int(11) DEFAULT NULL,
+  `cantidad` int(11) NOT NULL,
+  `categoria_id` int(11) NOT NULL,
+  `tipo_paquete` enum('seis','doce') NOT NULL,
+  `subtotal` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `carrito_zapato`
+--
+
+INSERT INTO `carrito_zapato` (`id`, `id_usuario`, `id_grupo`, `id_zapato`, `id_talla`, `id_color`, `cantidad`, `categoria_id`, `tipo_paquete`, `subtotal`) VALUES
+(104, 1, 'GRP-1768368507268', 2, 4, 2, 6, 3, 'seis', 2065.50);
 
 -- --------------------------------------------------------
 
@@ -100,9 +100,18 @@ INSERT INTO `colores_zapato` (`id_color`, `id_zapato`, `nombre`, `hex`) VALUES
 --
 
 CREATE TABLE `favoritos` (
+  `id_favorito` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
-  `id_zapato` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `id_zapato` int(11) NOT NULL,
+  `fecha_agregado` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `favoritos`
+--
+
+INSERT INTO `favoritos` (`id_favorito`, `id_usuario`, `id_zapato`, `fecha_agregado`) VALUES
+(38, 1, 1, '2026-01-13 22:52:26');
 
 -- --------------------------------------------------------
 
@@ -114,17 +123,67 @@ CREATE TABLE `imagenes_zapato` (
   `id_imagen` int(11) NOT NULL,
   `id_zapato` int(11) NOT NULL,
   `ruta` varchar(255) NOT NULL,
-  `orden` int(11) DEFAULT 1
+  `orden` int(11) DEFAULT 1,
+  `id_color` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Volcado de datos para la tabla `imagenes_zapato`
 --
 
-INSERT INTO `imagenes_zapato` (`id_imagen`, `id_zapato`, `ruta`, `orden`) VALUES
-(1, 1, 'Assets/Imagenes/Items/Botines/botin_chelse_cafe.jpg', 1),
-(2, 2, 'Assets/Imagenes/Items/Botines/botin_con_hebilla_cafe.jpg', 1),
-(3, 2, 'Assets/Imagenes/Items/Botines/botin_con_hebilla_negro.jpg', 2);
+INSERT INTO `imagenes_zapato` (`id_imagen`, `id_zapato`, `ruta`, `orden`, `id_color`) VALUES
+(1, 1, 'Assets/Imagenes/Items/Botines/botin_chelse_cafe.jpg', 1, NULL),
+(2, 2, 'Assets/Imagenes/Items/Botines/botin_con_hebilla_cafe.jpg', 1, 1),
+(3, 2, 'Assets/Imagenes/Items/Botines/botin_con_hebilla_negro.jpg', 1, 2),
+(4, 2, 'Assets\\Imagenes\\Items\\Botines\\botin_con_hebilla_negro_2.jpg', 2, 2);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `ofertas`
+--
+
+CREATE TABLE `ofertas` (
+  `id_oferta` int(11) NOT NULL,
+  `id_zapato` int(11) NOT NULL,
+  `porcentaje` int(11) NOT NULL,
+  `estado` tinyint(4) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `ofertas`
+--
+
+INSERT INTO `ofertas` (`id_oferta`, `id_zapato`, `porcentaje`, `estado`) VALUES
+(1, 1, 15, 1),
+(2, 2, 25, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `populares`
+--
+
+CREATE TABLE `populares` (
+  `id_popular` int(11) NOT NULL,
+  `id_zapato` int(11) NOT NULL,
+  `orden` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `populares`
+--
+
+INSERT INTO `populares` (`id_popular`, `id_zapato`, `orden`) VALUES
+(1, 1, 1),
+(2, 1, 2),
+(3, 1, 3),
+(4, 1, 4),
+(5, 1, 5),
+(6, 1, 6),
+(7, 1, 7),
+(8, 1, 8),
+(9, 1, 9);
 
 -- --------------------------------------------------------
 
@@ -165,6 +224,13 @@ CREATE TABLE `usuarios` (
   `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Volcado de datos para la tabla `usuarios`
+--
+
+INSERT INTO `usuarios` (`id_usuario`, `nombre`, `email`, `password`, `fecha_registro`) VALUES
+(1, 'Angel Rizo', 'correoej@gmail.com', '$2y$10$wFvS1vPmjUoT/n1IH6fx8eB0D3Uctk3/7q.2.jzlYEf5bp2tXCd5i', '2026-01-13 08:47:51');
+
 -- --------------------------------------------------------
 
 --
@@ -184,7 +250,7 @@ CREATE TABLE `zapatos` (
 
 INSERT INTO `zapatos` (`id_zapato`, `nombre`, `precio`, `id_categoria`) VALUES
 (1, 'Botín Chelse', 200.00, 3),
-(2, 'Botín prueba', 510.00, 3);
+(2, 'Botín con hebilla', 510.00, 3);
 
 -- --------------------------------------------------------
 
@@ -224,21 +290,10 @@ INSERT INTO `zapato_talla` (`id_zapato`, `id_talla`) VALUES
 --
 
 --
--- Indices de la tabla `carrito`
---
-ALTER TABLE `carrito`
-  ADD PRIMARY KEY (`id_carrito`),
-  ADD KEY `id_usuario` (`id_usuario`);
-
---
 -- Indices de la tabla `carrito_zapato`
 --
 ALTER TABLE `carrito_zapato`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `id_carrito` (`id_carrito`),
-  ADD KEY `id_zapato` (`id_zapato`),
-  ADD KEY `id_talla` (`id_talla`),
-  ADD KEY `id_color` (`id_color`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indices de la tabla `categorias`
@@ -258,7 +313,8 @@ ALTER TABLE `colores_zapato`
 -- Indices de la tabla `favoritos`
 --
 ALTER TABLE `favoritos`
-  ADD PRIMARY KEY (`id_usuario`,`id_zapato`),
+  ADD PRIMARY KEY (`id_favorito`),
+  ADD KEY `id_usuario` (`id_usuario`),
   ADD KEY `id_zapato` (`id_zapato`);
 
 --
@@ -266,6 +322,21 @@ ALTER TABLE `favoritos`
 --
 ALTER TABLE `imagenes_zapato`
   ADD PRIMARY KEY (`id_imagen`),
+  ADD KEY `id_zapato` (`id_zapato`),
+  ADD KEY `fk_imagen_color` (`id_color`);
+
+--
+-- Indices de la tabla `ofertas`
+--
+ALTER TABLE `ofertas`
+  ADD PRIMARY KEY (`id_oferta`),
+  ADD KEY `id_zapato` (`id_zapato`);
+
+--
+-- Indices de la tabla `populares`
+--
+ALTER TABLE `populares`
+  ADD PRIMARY KEY (`id_popular`),
   ADD KEY `id_zapato` (`id_zapato`);
 
 --
@@ -301,16 +372,10 @@ ALTER TABLE `zapato_talla`
 --
 
 --
--- AUTO_INCREMENT de la tabla `carrito`
---
-ALTER TABLE `carrito`
-  MODIFY `id_carrito` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT de la tabla `carrito_zapato`
 --
 ALTER TABLE `carrito_zapato`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=105;
 
 --
 -- AUTO_INCREMENT de la tabla `categorias`
@@ -325,10 +390,28 @@ ALTER TABLE `colores_zapato`
   MODIFY `id_color` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
+-- AUTO_INCREMENT de la tabla `favoritos`
+--
+ALTER TABLE `favoritos`
+  MODIFY `id_favorito` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+
+--
 -- AUTO_INCREMENT de la tabla `imagenes_zapato`
 --
 ALTER TABLE `imagenes_zapato`
-  MODIFY `id_imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_imagen` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT de la tabla `ofertas`
+--
+ALTER TABLE `ofertas`
+  MODIFY `id_oferta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de la tabla `populares`
+--
+ALTER TABLE `populares`
+  MODIFY `id_popular` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `tallas`
@@ -340,7 +423,7 @@ ALTER TABLE `tallas`
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `zapatos`
@@ -353,51 +436,49 @@ ALTER TABLE `zapatos`
 --
 
 --
--- Filtros para la tabla `carrito`
---
-ALTER TABLE `carrito`
-  ADD CONSTRAINT `carrito_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE;
-
---
--- Filtros para la tabla `carrito_zapato`
---
-ALTER TABLE `carrito_zapato`
-  ADD CONSTRAINT `carrito_zapato_ibfk_1` FOREIGN KEY (`id_carrito`) REFERENCES `carrito` (`id_carrito`) ON DELETE CASCADE,
-  ADD CONSTRAINT `carrito_zapato_ibfk_2` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`),
-  ADD CONSTRAINT `carrito_zapato_ibfk_3` FOREIGN KEY (`id_talla`) REFERENCES `tallas` (`id_talla`),
-  ADD CONSTRAINT `carrito_zapato_ibfk_4` FOREIGN KEY (`id_color`) REFERENCES `colores_zapato` (`id_color`);
-
---
 -- Filtros para la tabla `colores_zapato`
 --
 ALTER TABLE `colores_zapato`
-  ADD CONSTRAINT `colores_zapato_ibfk_1` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_colores_zapato` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `favoritos`
 --
 ALTER TABLE `favoritos`
-  ADD CONSTRAINT `favoritos_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE,
-  ADD CONSTRAINT `favoritos_ibfk_2` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`) ON DELETE CASCADE;
+  ADD CONSTRAINT `favoritos_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id_usuario`),
+  ADD CONSTRAINT `favoritos_ibfk_2` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`);
 
 --
 -- Filtros para la tabla `imagenes_zapato`
 --
 ALTER TABLE `imagenes_zapato`
-  ADD CONSTRAINT `imagenes_zapato_ibfk_1` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_imagen_color` FOREIGN KEY (`id_color`) REFERENCES `colores_zapato` (`id_color`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_img_zapato` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `ofertas`
+--
+ALTER TABLE `ofertas`
+  ADD CONSTRAINT `ofertas_ibfk_1` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`);
+
+--
+-- Filtros para la tabla `populares`
+--
+ALTER TABLE `populares`
+  ADD CONSTRAINT `populares_ibfk_1` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `zapatos`
 --
 ALTER TABLE `zapatos`
-  ADD CONSTRAINT `zapatos_ibfk_1` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`);
+  ADD CONSTRAINT `fk_zapato_cat` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`);
 
 --
 -- Filtros para la tabla `zapato_talla`
 --
 ALTER TABLE `zapato_talla`
-  ADD CONSTRAINT `zapato_talla_ibfk_1` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`) ON DELETE CASCADE,
-  ADD CONSTRAINT `zapato_talla_ibfk_2` FOREIGN KEY (`id_talla`) REFERENCES `tallas` (`id_talla`);
+  ADD CONSTRAINT `fk_zt_talla` FOREIGN KEY (`id_talla`) REFERENCES `tallas` (`id_talla`),
+  ADD CONSTRAINT `fk_zt_zapato` FOREIGN KEY (`id_zapato`) REFERENCES `zapatos` (`id_zapato`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

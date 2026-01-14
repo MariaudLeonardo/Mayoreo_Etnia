@@ -412,6 +412,10 @@ header {
     align-items: center;
 }
 
+.modal-tallas-overlay.activo {
+    display: flex !important; /* <--- AQUÍ ESTÁ LA MAGIA: Se muestra */
+}
+
 .modal-tallas-content {
     background-color: white;
     padding: 30px;
@@ -465,14 +469,17 @@ header {
 }
 
 .btn-talla:hover {
-    background-color: var(--color_tres);
-    color: white;
+    background-color: var(--color_dos); /* Un beige suavecito */
+    color: var(--color_cinco) !important; /* Texto oscuro siempre */
+    border-color: var(--color_uno);
 }
 
 .btn-talla.talla__activa {
-    background-color: var(--color_uno);
-    border-color: var(--color_uno);
-    color: white;
+    background-color: white !important; /* Fondo blanco como pediste */
+    border: 2px solid var(--color_uno) !important; /* Borde café para resaltar */
+    color: var(--color_cinco) !important; /* IMPORTANTE: Texto oscuro siempre */
+    font-weight: bold;
+    transform: scale(1.05); /* Un pequeño zoom para que se note cuál es */
 }
 
 /* -------------------------------------------- CARRITO LATERAL -------------------------------------------- */
@@ -980,4 +987,231 @@ header {
     height: 35px !important;
     font-size: 20px;
     font-weight: bold;
+}
+
+/* --- NUEVOS ESTILOS PARA DISTRIBUCIÓN DE TALLAS --- */
+
+/* Indicador de cantidad sobre el botón de talla */
+.btn-talla {
+    position: relative; /* Para posicionar el badge */
+}
+
+.badge-cantidad {
+    position: absolute;
+    /* Ajustamos para que quede en la esquina superior derecha */
+    top: -8px;
+    right: 50px;
+    /* NUEVO COLOR CAFÉ (Acorde a la temática de la página) */
+    background-color: #A07855; 
+    color: #fff; /* Texto blanco para que resalte */
+    font-size: 11px;
+    font-weight: bold;
+    width: 20px; /* Un poco más grande para que se vea bien */
+    height: 20px;
+    border-radius: 50%; /* Lo hace perfectamente redondo */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border: 2px solid #fff; /* Un borde blanco para separarlo del botón */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Una pequeña sombra para darle profundidad */
+}
+
+/* Clase para mostrarlo */
+.badge-cantidad.visible {
+    display: flex !important;
+}
+
+/* Panel de control (Slider + Input) */
+.panel-distribucion {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--color_dos);
+    border-radius: 8px;
+    border: 1px solid var(--color_tres);
+    display: none; /* Oculto hasta elegir talla */
+    animation: fadeIn 0.3s ease;
+}
+
+.panel-distribucion.activo {
+    display: block;
+}
+
+.controles-talla {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+/* Slider */
+.slider-talla {
+    flex: 1;
+    cursor: pointer;
+    accent-color: var(--color_uno);
+    height: 6px;
+}
+
+/* Input numérico */
+.input-talla-manual {
+    width: 60px;
+    padding: 5px;
+    text-align: center;
+    border: 1px solid var(--color_tres);
+    border-radius: 5px;
+    font-weight: bold;
+    color: var(--color_cinco);
+}
+
+/* Resumen de suma */
+.feedback-suma {
+    text-align: center;
+    margin: 15px 0;
+    font-weight: bold;
+    color: var(--color_cinco);
+    padding: 10px;
+    background-color: #eee;
+    border-radius: 5px;
+}
+
+.feedback-suma.completo {
+    background-color: #d4edda; /* Verde claro */
+    color: #155724;
+}
+
+.feedback-suma.exceso {
+    background-color: #f8d7da; /* Rojo claro */
+    color: #721c24;
+}
+
+/* Botón confirmar final */
+.btn-confirmar-distribucion {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--color_tres); /* Gris por defecto */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: not-allowed;
+    margin-top: 10px;
+}
+
+.btn-confirmar-distribucion.habilitado {
+    background-color: var(--color_uno); /* Café activo */
+    cursor: pointer;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Contenedor de las etiquetas de tallas */
+.contenedor-tags-tallas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 5px 0;
+}
+
+/* Cada etiqueta de talla (Ej: T24: 2) */
+.tag-talla {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    color: var(--color_cinco);
+    white-space: nowrap; /* Evita que se rompa el texto dentro de la etiqueta */
+}
+
+.tag-talla b {
+    color: var(--color_uno); /* Resalta el número de pares */
+}
+
+/* Información extra */
+.info-meta {
+    font-size: 12px;
+    color: var(--color_cuatro);
+    margin: 0;
+}
+
+.info-precios {
+    font-size: 12px;
+    margin-top: 5px;
+    line-height: 1.4;
+    color: var(--color_cinco);
+}
+
+.info-paq {
+    font-weight: bold;
+    color: var(--color_uno);
+}
+
+.precio-final-item {
+    font-size: 15px !important;
+    font-weight: bold !important;
+    color: var(--color_cinco) !important;
+    margin-top: 5px !important;
+    border-top: 1px dashed #ddd;
+    padding-top: 5px;
+}
+
+/* Etiqueta de descuento (Ej: -20%) */
+.badge-descuento {
+    background-color: #e74c3c; /* Rojo */
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Precio original tachado (Opcional, si quisieras mostrar el antes y después) */
+.precio-tachado {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 0.8em;
+    margin-right: 5px;
+}
+
+/* Botón flotante de favoritos en el modal */
+.btn-favorito-flotante {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(255, 255, 255, 0.8); /* Fondo semitransparente para que se vea sobre la foto */
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+
+.btn-favorito-flotante:hover {
+    transform: scale(1.1);
+}
+
+/* Estado Base: Estrella Vacía (Solo borde) */
+.icono-estrella {
+    fill: transparent;      /* Relleno transparente */
+    stroke: #aaa;           /* Borde gris */
+    stroke-width: 2;
+    transition: all 0.3s;
+}
+
+/* Estado Activo: Estrella Llena (Dorada) */
+.btn-favorito-flotante.activo .icono-estrella {
+    fill: #f1c40f;          /* Relleno dorado */
+    stroke: #f1c40f;        /* Borde dorado */
 }

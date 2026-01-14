@@ -1,87 +1,109 @@
-<!-- PHP CONEXION -->
 <?php
+session_start();
 require_once "Assets/Scripts/conexion.php";
 
-// Configuración de codificación
 header('Content-Type: text/html; charset=utf-8');
 mb_internal_encoding('UTF-8');
 
-// Función para escapar strings para JavaScript
 function js_escape($string)
 {
     return str_replace(["\r", "\n", "'", '"'], ['', '', "\\'", '\\"'], $string);
 }
 
+// 1. CONSULTA PRINCIPAL CON OFERTAS (LEFT JOIN)
 $sql = "
 SELECT 
     z.id_zapato,
+    z.id_categoria, -- Agregamos el ID para que JS lo conozca
     z.nombre,
     z.precio,
     c.nombre AS nombre_categoria,
-    i.ruta AS ruta_imagen
+    o.porcentaje AS descuento
 FROM zapatos z
-INNER JOIN categorias c
-    ON z.id_categoria = c.id_categoria
-LEFT JOIN imagenes_zapato i
-    ON z.id_zapato = i.id_zapato
-    AND i.orden = 1
-";
+INNER JOIN categorias c ON z.id_categoria = c.id_categoria
+LEFT JOIN ofertas o ON z.id_zapato = o.id_zapato AND o.estado = 1
+ORDER BY z.id_zapato DESC";
+
 
 $resultado = $conexion->query($sql);
-
-if (!$resultado) {
-    die("Error en la consulta SQL: " . $conexion->error);
-}
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tienda Emprendimiento Principal</title>
-    <link rel="stylesheet" href="Assets\Scripts\estilos.css">
+    <link rel="stylesheet" href="Assets/Scripts/estilos.css">
     <link rel="stylesheet" href="https://www.flaticon.es/icon-fonts-mas-descargados?weight=bold&type=uicon.css">
+    <style>
+        .badge-descuento {
+            background-color: #e74c3c;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 4px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .etiqueta-flotante-oferta {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #e74c3c;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            z-index: 2;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+    </style>
 </head>
 
 <body>
-    <script src="Assets\Scripts\controlador.js"></script>
 
     <header>
         <div class="container__header">
             <section class="layout">
                 <div class="logo">
-                    <a href="#">
-                        <img src="Assets/Imagenes/Logo/etnia_logo.png" alt="Logo Etnia">
-                    </a>
+                    <a href="index.php"><img src="Assets/Imagenes/Logo/etnia_logo.png" alt="Logo Etnia"></a>
                 </div>
-
                 <div class="menu__tienda">
                     <nav>
                         <ul>
-                            <li><a href="#">HOME</a></li>
-                            <li><a href="#">POPULARES</a></li>
-                            <li><a href="#">OFERTAS</a></li>
-                            <li><a href="#">FAVORITOS</a></li>
-                            <li><a href="#">
-                                    <div class="icono__busqueda">
-                                        <img src="Assets\Imagenes\Iconos\busqueda.png" alt="Buscar">
-                                    </div>
+                            <li><a href="index.php" style="color: var(--color_uno);">HOME</a></li>
+                            <li><a href="Assets/Scripts/populares.php">POPULARES</a></li>
+                            <li><a href="Assets/Scripts/ofertas.php">OFERTAS</a></li>
+                            <li><a href="Assets/Scripts/favoritos.php">FAVORITOS</a></li>
+                            <li><a href="#" onclick="toggleBuscador(event)">
+                                    <div class="icono__busqueda"><img src="Assets/Imagenes/Iconos/busqueda.png"
+                                            alt="Buscar"></div>
                                 </a></li>
                         </ul>
                     </nav>
                 </div>
-
                 <div class="menu__usuario">
                     <nav>
                         <ul>
                             <li><a href="#" id="btn-abrir-carrito">CARRITO</a></li>
-                            <li><a href="#">CUENTA</a></li>
+
+                            <?php if (isset($_SESSION['id_usuario'])): ?>
+                                <li><a href="#" style="color:var(--color_uno); font-weight:bold; font-size:13px;">HOLA,
+                                        <?= strtoupper($_SESSION['nombre']) ?></a></li>
+                                <li><a href="Assets/Scripts/auth.php?accion=logout"
+                                        style="color:#e74c3c; font-size:11px;">(SALIR)</a></li>
+                            <?php else: ?>
+                                <li><a href="#" onclick="abrirModalAuth()">CUENTA</a></li>
+                            <?php endif; ?>
+
                             <li><a href="#">
-                                    <div class="icono__usuario">
-                                        <img src="Assets\Imagenes\Iconos\usuario.png" alt="Usuario">
-                                    </div>
+                                    <div class="icono__usuario"><img src="Assets/Imagenes/Iconos/usuario.png"
+                                            alt="Usuario"></div>
                                 </a></li>
                         </ul>
                     </nav>
@@ -91,173 +113,152 @@ if (!$resultado) {
     </header>
 
     <main>
-        <!-- INICIO - Portada de inicio -->
         <div class="container__portada div__offset" id="inicio">
             <div class="portada">
                 <section class="text__portada">
                     <h1>Emprende con Etnia</h1>
                     <h2>Únete al equipo y comienza a generar ingresos</h2>
-                    <p>
-                        Escoge Modelo punto y color<br>
-                        Paquetes de 6 o 12 para cumplir con la promoción<br><br>
-                        Puntos a considerar:<br>
-                        - El cliente cubre gastos de envío<br>
-                        - Consultar si el modelo esta disponible.
+                    <p>Escoge Modelo punto y color<br>Paquetes de 6 o 12 para cumplir con la promoción<br><br>Puntos a
+                        considerar:<br>- El cliente cubre gastos de envío<br>- Consultar si el modelo esta disponible.
                     </p>
-                    <a href="Assets\Catalogos\EMPRENDE CON ETNIA CATALOGO.pdf"
-                        download="EMPRENDE CON ETNIA CATALOGO.pdf" class="btn__catalogo">
-                        Descargar catálogo
-                    </a>
+                    <a href="Assets/Catalogos/EMPRENDE CON ETNIA CATALOGO.pdf"
+                        download="EMPRENDE CON ETNIA CATALOGO.pdf" class="btn__catalogo">Descargar catálogo</a>
                 </section>
-
                 <section class="image__portada">
-                    <img src="Assets\Imagenes\Portada\imagen_portada.jpeg" alt="Portada Tienda">
+                    <img src="Assets/Imagenes/Portada/imagen_portada.jpeg" alt="Portada Tienda">
                 </section>
             </div>
         </div>
 
-        <!-- Productos -->
         <section class="layout__productos">
             <?php while ($zapato = $resultado->fetch_assoc()):
                 $id = $zapato['id_zapato'];
-                $nombreEscapado = js_escape($zapato['nombre']);
-                $categoriaEscapada = js_escape($zapato['nombre_categoria']);
 
-                // Consulta de imágenes del zapato actual
-                $sqlImagenes = "
-                SELECT ruta
-                FROM imagenes_zapato
-                WHERE id_zapato = ?
-                ORDER BY orden ASC
-                ";
+                $precioNormal = floatval($zapato['precio']);
+                $descuento = intval($zapato['descuento']);
+                $precioFinal = $precioNormal;
 
-                $stmt = $conexion->prepare($sqlImagenes);
+                if ($descuento > 0) {
+                    $precioFinal = $precioNormal - ($precioNormal * ($descuento / 100));
+                }
+
+                $stmt = $conexion->prepare("SELECT ruta, id_color FROM imagenes_zapato WHERE id_zapato = ? ORDER BY orden ASC");
                 $stmt->bind_param("i", $id);
                 $stmt->execute();
-                $resultadoImagenes = $stmt->get_result();
-
-                $imagenes = [];
-                while ($img = $resultadoImagenes->fetch_assoc()) {
-                    $imagenes[] = $img['ruta'];
+                $resImg = $stmt->get_result();
+                $imagenesPorColor = [];
+                $todasLasImagenes = [];
+                while ($img = $resImg->fetch_assoc()) {
+                    $ruta = $img['ruta'];
+                    if ($img['id_color'])
+                        $imagenesPorColor[$img['id_color']][] = $ruta;
+                    $todasLasImagenes[] = $ruta;
                 }
+                $imagenPrincipal = $todasLasImagenes[0] ?? 'Assets/Imagenes/default.png';
 
-                $imagenPrincipal = $imagenes[0] ?? 'Assets/Imagenes/default.png';
-                $imagenPrincipalEscapada = js_escape($imagenPrincipal);
+                $stmtC = $conexion->prepare("SELECT id_color, hex, nombre FROM colores_zapato WHERE id_zapato = ?");
+                $stmtC->bind_param("i", $id);
+                $stmtC->execute();
+                $resCol = $stmtC->get_result();
+                $coloresData = [];
+                while ($c = $resCol->fetch_assoc())
+                    $coloresData[] = ['id' => $c['id_color'], 'hex' => $c['hex'], 'nombre' => $c['nombre']];
 
-                // Consulta de colores del zapato actual
-                $sqlColores = "
-                SELECT hex
-                FROM colores_zapato
-                WHERE id_zapato = ?
-                ORDER BY id_color
-                ";
-
-                $stmtColores = $conexion->prepare($sqlColores);
-                $stmtColores->bind_param("i", $id);
-                $stmtColores->execute();
-                $resultadoColores = $stmtColores->get_result();
-
-                $colores = [];
-                while ($color = $resultadoColores->fetch_assoc()) {
-                    $colores[] = $color['hex'];
-                }
-
-                $sqlTallas = "
-                SELECT t.valor 
-                FROM zapato_talla zt
-                INNER JOIN tallas t ON zt.id_talla = t.id_talla
-                WHERE zt.id_zapato = ?
-                ORDER BY t.valor ASC
-                ";
-
-                $stmtTallas = $conexion->prepare($sqlTallas);
-                $stmtTallas->bind_param("i", $id);
-                $stmtTallas->execute();
-                $resultadoTallas = $stmtTallas->get_result();
-
+                $stmtT = $conexion->prepare("SELECT t.valor FROM zapato_talla zt JOIN tallas t ON zt.id_talla = t.id_talla WHERE zt.id_zapato = ? ORDER BY t.valor ASC");
+                $stmtT->bind_param("i", $id);
+                $stmtT->execute();
+                $resTal = $stmtT->get_result();
                 $tallas = [];
-                while ($talla = $resultadoTallas->fetch_assoc()) {
-                    $tallas[] = floatval($talla['valor']); // Convertir a número
-                }
+                while ($t = $resTal->fetch_assoc())
+                    $tallas[] = floatval($t['valor']);
 
-                // Preparar arrays para JavaScript
-                $coloresJSON = json_encode($colores, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
-                $imagenesJSON = json_encode($imagenes, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
-                $tallasJSON = json_encode($tallas, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
+                $jsonDatos = json_encode([
+                    'id' => $id,
+                    'id_categoria' => $zapato['id_categoria'],
+                    'nombre' => $zapato['nombre'],
+                    'categoria' => $zapato['nombre_categoria'],
+                    'precio' => $precioFinal,
+                    'imagenPortada' => $imagenPrincipal,
+                    'colores' => $coloresData,
+                    'imagenesPorColor' => $imagenesPorColor,
+                    'tallas' => $tallas
+                ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
+
+                $estiloBorde = ($descuento > 0) ? "style='border: 2px solid #e74c3c;'" : "";
                 ?>
 
-                <article class="container__item_01">
+                <article class="container__item_01" <?= $estiloBorde ?>>
                     <div class="img__item_01">
                         <figure>
                             <img id="item_<?= $id ?>" src="<?= htmlspecialchars($imagenPrincipal) ?>"
-                                alt="<?= htmlspecialchars($zapato['nombre']) ?>" onclick='abrirModalProducto(<?=
-                                      str_replace("'", "\'", json_encode([
-                                          'id' => $id,
-                                          'nombre' => $zapato['nombre'],
-                                          'categoria' => $zapato['nombre_categoria'],
-                                          'precio' => floatval($zapato['precio']),
-                                          'imagen' => $imagenPrincipal,
-                                          'colores' => $colores,
-                                          'imagenes' => $imagenes,
-                                          'tallas' => $tallas  // ✅ TALLAS DESDE BD
-                                      ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE))
-                                      ?>)' </figure>
+                                alt="<?= htmlspecialchars($zapato['nombre']) ?>"
+                                onclick='abrirModalProducto(<?= $jsonDatos ?>)'>
 
-                            <!-- COLORES DINÁMICOS -->
-                            <?php if (count($imagenes) > 0 && count($colores) > 0): ?>
-                                <section class="colores__item_01">
-                                    <?php foreach ($colores as $index => $colorHex):
-                                        $rutaImagen = $imagenes[$index] ?? $imagenPrincipal;
-                                        $rutaImagenEscapada = js_escape($rutaImagen);
-                                        ?>
-                                        <button class="btn__color" style="background-color: <?= htmlspecialchars($colorHex) ?>;"
-                                            onclick="establecerImagen(
-                                                'item_<?= $id ?>',
-                                                '<?= $rutaImagenEscapada ?>',
-                                                '<?= $nombreEscapado ?>'
-                                            )" title="Color <?= $index + 1 ?>">
-                                        </button>
-                                    <?php endforeach; ?>
-                                </section>
+                            <?php if ($descuento > 0): ?>
+                                <div class="etiqueta-flotante-oferta">-<?= $descuento ?>%</div>
                             <?php endif; ?>
 
-                            <!-- PAQUETES -->
-                            <section class="paquete__item_01">
-                                <button class="btn__paquete_seis"
-                                    onclick="cambiarPrecio('precio_item_<?= $id ?>', 'seis', <?= $id ?>)">
-                                    6
-                                </button>
+                            <?php if (count($coloresData) > 1): ?>
+                                <div class="colores__item_01">
+                                    <?php
+                                    $esPrimero = true;
+                                    foreach ($coloresData as $color):
+                                        $rutaColor = $imagenesPorColor[$color['id']][0] ?? $imagenPrincipal;
+                                        ?>
+                                        <button class="btn__color <?= $esPrimero ? 'activo' : '' ?>"
+                                            style="background-color: <?= $color['hex'] ?>;" title="<?= $color['nombre'] ?>"
+                                            data-id-color="<?= $color['id'] ?>"
+                                            onclick="seleccionarColorTarjeta(this, 'item_<?= $id ?>', '<?= $rutaColor ?>', '<?= js_escape($zapato['nombre']) ?>'); event.stopPropagation();">
+                                        </button>
+                                        <?php
+                                        $esPrimero = false;
+                                    endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="paquete__item_01">
+                                <button class="btn__paquete_seis activo"
+                                    onclick="cambiarPrecio('precio_item_<?= $id ?>', 'seis', <?= $id ?>)">6</button>
                                 <button class="btn__paquete_doce"
-                                    onclick="cambiarPrecio('precio_item_<?= $id ?>', 'doce', <?= $id ?>)">
-                                    12
-                                </button>
-                            </section>
+                                    onclick="cambiarPrecio('precio_item_<?= $id ?>', 'doce', <?= $id ?>)">12</button>
+                            </div>
+                        </figure>
                     </div>
 
-                    <section class="info__item_01">
+                    <div class="info__item_01">
                         <h1><?= htmlspecialchars($zapato['nombre_categoria']) ?></h1>
                         <h2><?= htmlspecialchars($zapato['nombre']) ?></h2>
+
                         <p class="precio_01" id="precio_item_<?= $id ?>"
-                            data-precio-individual="<?= number_format($zapato['precio'], 2, '.', '') ?>"
+                            data-precio-individual="<?= number_format($precioFinal, 2, '.', '') ?>"
                             data-paquete-actual="seis"
-                            data-precio-paquete="<?= number_format($zapato['precio'] * 6 * 0.9, 2, '.', '') ?>">
-                            $<?= number_format($zapato['precio'] * 6 * 0.9, 2) ?>
+                            style="<?= ($descuento > 0) ? 'color:#e74c3c; font-weight:bold;' : '' ?>">
+
+                            $<?= number_format($precioFinal * 6 * 0.9, 2) ?>
+
+                            <?php if ($descuento > 0): ?>
+                                <span class="badge-descuento">-<?= $descuento ?>%</span>
+                            <?php endif; ?>
                         </p>
-                    </section>
+                    </div>
 
                     <div class="seleccionar__cantidad_01">
                         <div class="cantidad__control_01">
-                            <button class="btn__cantidad_menos_01" onclick="controlarCantidad('input_<?= $id ?>', -1)">
-                                -
-                            </button>
+                            <button class="btn__cantidad_menos_01"
+                                onclick="controlarCantidad('input_<?= $id ?>', -1)">-</button>
                             <input id="input_<?= $id ?>" type="text" value="1" class="input__cantidad_01"
                                 onchange="validarEntrada('input_<?= $id ?>')" onkeypress="return soloNumeros(event)">
-                            <button class="btn__cantidad_mas_01" onclick="controlarCantidad('input_<?= $id ?>', 1)">
-                                +
-                            </button>
+                            <button class="btn__cantidad_mas_01"
+                                onclick="controlarCantidad('input_<?= $id ?>', 1)">+</button>
                         </div>
-                        <button class="btn__carrito_01" onclick="abrirModalTallas(<?= $id ?>)">
-                            <img src="Assets/Imagenes/Iconos/carrito-de-compras.png" alt="Agregar al carrito">
+                        <button class="btn__carrito_01" onclick="abrirModalTallasConDatos(
+                                <?= $id ?>, 
+                                '<?= js_escape($zapato['nombre']) ?>', 
+                                <?= $precioFinal ?>, 
+                                '<?= $imagenPrincipal ?>',
+                                <?= $zapato['id_categoria'] ?> 
+                            )">
+                            <img src="Assets/Imagenes/Iconos/carrito-de-compras.png" alt="Agregar">
                         </button>
                     </div>
                 </article>
@@ -265,95 +266,15 @@ if (!$resultado) {
         </section>
     </main>
 
-    <!-- Modal de Selección de Tallas -->
-    <div id="modal-tallas" class="modal-tallas-overlay">
-        <div class="modal-tallas-content">
-            <span class="btn-cerrar-modal" onclick="cerrarModalTallas()">&times;</span>
-            <h3>Selecciona tu talla</h3>
-            <div id="grid-tallas" class="grid-tallas"></div>
-        </div>
-    </div>
+    <script>
+        const usuarioLogueado = <?= isset($_SESSION['id_usuario']) ? 'true' : 'false' ?>;
+    </script>
 
-    <!-- Modal de Producto Detallado -->
-    <div id="modalProducto" class="modal__overlay">
-        <div class="modal__contenido">
-            <button class="modal__cerrar" onclick="cerrarModalProducto()">&times;</button>
+    <?php include "Assets/Scripts/componentes_modales.php"; ?>
+    <?php include "Assets/Scripts/componentes_buscador.php"; ?>
 
-            <div class="modal__grid">
-                <!-- Sección de imágenes -->
-                <div class="modal__imagen">
-                    <img id="modalImagenPrincipal" src="" alt="" class="imagen__principal">
+    <script src="Assets/Scripts/controlador.js"></script>
 
-                    <div class="miniaturas" id="modalMiniaturas">
-                        <!-- Miniaturas se llenarán con JavaScript -->
-                    </div>
-                </div>
-
-                <!-- Sección de información -->
-                <div class="modal__info">
-                    <h2 id="modalCategoria"></h2>
-                    <h1 id="modalNombre"></h1>
-                    <p class="modal__precio" id="modalPrecio"></p>
-
-                    <!-- Colores -->
-                    <div class="modal__colores" id="modalColores">
-                        <!-- Botones de colores se llenarán con JavaScript -->
-                    </div>
-
-                    <!-- Tallas -->
-                    <div class="modal__tallas" id="modalTallas">
-                        <h3>Selecciona tu talla:</h3>
-                        <!-- Botones de tallas se llenarán con JavaScript -->
-                    </div>
-
-                    <!-- Cantidad -->
-                    <div class="modal__cantidad_container">
-                        <h3>Cantidad:</h3>
-                        <div class="cantidad__control_01" style="margin: 10px 0;">
-                            <button class="btn__cantidad_menos_01" onclick="modalControlarCantidad(-1)">-</button>
-                            <input id="modalCantidad" type="text" value="1" class="input__cantidad_01"
-                                onchange="modalValidarEntrada()" onkeypress="return soloNumeros(event)">
-                            <button class="btn__cantidad_mas_01" onclick="modalControlarCantidad(1)">+</button>
-                        </div>
-                    </div>
-
-                    <!-- Paquetes -->
-                    <!-- Paquetes -->
-                    <div class="modal__paquetes">
-                        <h3>Pares:</h3>
-                        <div style="display: flex; gap: 15px; margin: 10px 0;">
-                            <button class="btn__paquete_seis" onclick="modalCambiarPaquete('seis')">6</button>
-                            <button class="btn__paquete_doce" onclick="modalCambiarPaquete('doce')">12</button>
-                        </div>
-                    </div>
-
-                    <!-- Botón de agregar al carrito -->
-                    <button class="btn__agregar_modal" onclick="modalAgregarAlCarrito()">
-                        AGREGAR AL CARRITO
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Carrito Lateral -->
-    <div class="carrito-overlay" id="carrito-overlay"></div>
-    <div class="carrito-lateral" id="carrito-lateral">
-        <div class="carrito-header">
-            <h3>Tu Carrito</h3>
-            <button class="btn-cerrar-carrito" id="btn-cerrar-carrito">&times;</button>
-        </div>
-        <div class="carrito-body" id="carrito-contenido">
-            <p style="text-align: center; margin-top: 20px;">Tu carrito está vacío por ahora.</p>
-        </div>
-        <div class="carrito-footer">
-            <div class="carrito-subtotal">
-                <span>SUBTOTAL:</span>
-                <span id="carrito-precio-final">$0.00</span>
-            </div>
-            <button class="btn-hacer-pedido">HACER PEDIDO</button>
-        </div>
-    </div>
 </body>
 
 </html>
