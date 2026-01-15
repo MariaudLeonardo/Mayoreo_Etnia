@@ -1026,10 +1026,39 @@ function validarYComprar() {
 }
 
 function procesarPedidoFinal() {
-    // Aquí iría la lógica final (enviar a WhatsApp o Pasarela de Pago)
-    alert("¡Sesión validada! Redirigiendo a WhatsApp/Pago... (Lógica pendiente)");
+    // 1. Mostrar un indicador de carga (opcional pero recomendado)
+    const btnCompra = document.querySelector('.btn-hacer-pedido');
+    btnCompra.disabled = true;
+    btnCompra.textContent = "PROCESANDO...";
 
-    // Ejemplo: window.location.href = "checkout.php";
+    // 2. Llamada a la API para finalizar el pedido
+    fetch(API_CARRITO, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            accion: 'finalizar_pedido' 
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert("¡Pedido realizado con éxito! Se ha enviado un correo de confirmación.");
+            // Limpiamos el carrito local y redirigimos o recargamos
+            carritoDeCompras = [];
+            renderizarCarritoHTML();
+            location.href = "index.php"; 
+        } else {
+            alert("Error al procesar el pedido: " + data.msg);
+            btnCompra.disabled = false;
+            btnCompra.textContent = "HACER PEDIDO";
+        }
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        alert("Hubo un problema con la conexión al servidor.");
+        btnCompra.disabled = false;
+        btnCompra.textContent = "HACER PEDIDO";
+    });
 }
 
 function seleccionarColorTarjeta(btn, idImagen, rutaImg, nombreZapato) {

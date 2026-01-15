@@ -6,7 +6,7 @@ require_once "conexion.php";
 $queryTexto = isset($_GET['q']) ? $conexion->real_escape_string($_GET['q']) : '';
 $categoriasSeleccionadas = isset($_GET['cats']) ? $_GET['cats'] : [];
 
-// CONSTRUIR CONSULTA SQL DINÁMICA
+// CONSTRUIR CONSULTA SQL DINÁMICA (Agrupada para evitar duplicados)
 $sql = "
 SELECT 
     z.id_zapato, z.nombre, z.precio, z.id_categoria, c.nombre AS nombre_categoria,
@@ -26,9 +26,14 @@ if (!empty($categoriasSeleccionadas)) {
     $sql .= " AND z.id_categoria IN ($idsCats) ";
 }
 
-$sql .= " ORDER BY z.id_zapato DESC";
+$sql .= " GROUP BY z.id_zapato ORDER BY z.id_zapato DESC";
 
 $resultado = $conexion->query($sql);
+
+function js_escape($string)
+{
+    return str_replace(["\r", "\n", "'", '"'], ['', '', "\\'", '\\"'], $string);
+}
 ?>
 
 <!DOCTYPE html>
@@ -142,13 +147,14 @@ $resultado = $conexion->query($sql);
             function renderizarTarjetaBusqueda($zapato, $conexion)
             {
                 $id = $zapato['id_zapato'];
-
+                $idCategoria = intval($zapato['id_categoria']);
+                $nombreJS = js_escape($zapato['nombre']);
                 $precioNormal = floatval($zapato['precio']);
                 $descuento = intval($zapato['descuento']);
-                $precioFinal = $precioNormal;
-                if ($descuento > 0)
-                    $precioFinal = $precioNormal - ($precioNormal * ($descuento / 100));
+                $precioFinal = ($descuento > 0) ? $precioNormal - ($precioNormal * ($descuento / 100)) : $precioNormal;
+                $uid = $id . '_search';
 
+                // 1. IMÁGENES: Limpieza y normalización
                 $stmt = $conexion->prepare("SELECT ruta, id_color FROM imagenes_zapato WHERE id_zapato = ? ORDER BY orden ASC");
                 $stmt->bind_param("i", $id);
                 $stmt->execute();
@@ -156,21 +162,27 @@ $resultado = $conexion->query($sql);
                 $imagenesPorColor = [];
                 $todasLasImagenes = [];
                 while ($img = $resImg->fetch_assoc()) {
-                    $ruta = "../../" . $img['ruta'];
-                    if ($img['id_color'])
-                        $imagenesPorColor[$img['id_color']][] = $ruta;
-                    $todasLasImagenes[] = $ruta;
+                    $rutaLimpia = str_replace('\\', '/', $img['ruta']);
+                    $rutaVisual = "../../" . $rutaLimpia;
+                    if ($img['id_color']) {
+                        $imagenesPorColor[$img['id_color']][] = $rutaVisual;
+                    }
+                    $todasLasImagenes[] = $rutaVisual;
                 }
-                $imgPrincipal = $todasLasImagenes[0] ?? '../../Assets/Imagenes/default.png';
+                $imgPrincipalVisual = $todasLasImagenes[0] ?? '../../Assets/Imagenes/default.png';
+                $imgPrincipalAbs = str_replace('../../', '/Mayoreo_Etnia/', $imgPrincipalVisual);
 
+                // 2. COLORES: Mapeo id_color -> id
                 $stmtC = $conexion->prepare("SELECT id_color, hex, nombre FROM colores_zapato WHERE id_zapato = ?");
                 $stmtC->bind_param("i", $id);
                 $stmtC->execute();
                 $resCol = $stmtC->get_result();
                 $coloresData = [];
-                while ($c = $resCol->fetch_assoc())
+                while ($c = $resCol->fetch_assoc()) {
                     $coloresData[] = ['id' => $c['id_color'], 'hex' => $c['hex'], 'nombre' => $c['nombre']];
+                }
 
+                // 3. TALLAS
                 $stmtT = $conexion->prepare("SELECT t.valor FROM zapato_talla zt JOIN tallas t ON zt.id_talla = t.id_talla WHERE zt.id_zapato = ? ORDER BY t.valor");
                 $stmtT->bind_param("i", $id);
                 $stmtT->execute();
@@ -179,71 +191,92 @@ $resultado = $conexion->query($sql);
                 while ($t = $resTal->fetch_assoc())
                     $tallas[] = floatval($t['valor']);
 
+                // 4. JSON PARA POPUP
                 $jsonDatos = json_encode([
                     'id' => $id,
                     'nombre' => $zapato['nombre'],
                     'categoria' => $zapato['nombre_categoria'],
+                    'id_categoria' => $idCategoria,
                     'precio' => $precioFinal,
-                    'imagenPortada' => $imgPrincipal,
+                    'imagenPortada' => $imgPrincipalVisual,
                     'colores' => $coloresData,
                     'imagenesPorColor' => $imagenesPorColor,
                     'tallas' => $tallas
                 ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
 
-                $estiloBorde = ($descuento > 0) ? "style='border: 2px solid #e74c3c;'" : "";
-                $uid = $id . '_search';
+                ?>
+                <article class="container__item_01"
+                    style="<?= ($descuento > 0) ? 'border: 2px solid #e74c3c;' : '' ?> position:relative; background:white;">
+                    <div class="img__item_01">
+                        <figure style="position: relative;">
+                            <img id="item_<?= $uid ?>" src="<?= $imgPrincipalVisual ?>"
+                                alt="<?= htmlspecialchars($zapato['nombre']) ?>"
+                                onclick='abrirModalProducto(<?= $jsonDatos ?>)'>
 
-                echo "
-                <article class='container__item_01' {$estiloBorde}>
-                    <div class='img__item_01'>
-                        <figure style='position:relative;'>
-                            <img id='item_{$uid}' src='{$imgPrincipal}' alt='{$zapato['nombre']}' onclick='abrirModalProducto({$jsonDatos})'>
-                            ";
-                if ($descuento > 0)
-                    echo "<div class='etiqueta-flotante-oferta'>-{$descuento}%</div>";
+                            <?php if ($descuento > 0): ?>
+                                <div class="etiqueta-flotante-oferta">-<?= $descuento ?>%</div>
+                            <?php endif; ?>
 
-                if (count($coloresData) > 1) {
-                    echo "<div class='colores__item_01'>";
-                    foreach ($coloresData as $color) {
-                        $rutaColor = $imagenesPorColor[$color['id']][0] ?? $imgPrincipal;
-                        $rutaJS = str_replace("'", "\\'", $rutaColor);
-                        echo "<button class='btn__color' style='background-color: {$color['hex']};' title='{$color['nombre']}' onclick=\"establecerImagen('item_{$uid}', '{$rutaJS}', 'Color'); event.stopPropagation();\"></button>";
-                    }
-                    echo "</div>";
-                }
-                echo "
-                            <div class='paquete__item_01'>
-                                 <button class='btn__paquete_seis activo' onclick=\"cambiarPrecio('precio_item_{$uid}', 'seis', '{$uid}')\">6</button>
-                                 <button class='btn__paquete_doce' onclick=\"cambiarPrecio('precio_item_{$uid}', 'doce', '{$uid}')\">12</button>
+                            <?php if (count($coloresData) > 0): ?>
+                                <div class="colores__item_01" <?= (count($coloresData) === 1) ? 'style="display:none;"' : '' ?>>
+                                    <?php
+                                    $esPrimero = true;
+                                    foreach ($coloresData as $color):
+                                        $rutaC = $imagenesPorColor[$color['id']][0] ?? $imgPrincipalVisual;
+                                        $rutaJS = js_escape($rutaC);
+                                        $claseActivo = $esPrimero ? 'activo' : '';
+                                        ?>
+                                        <button class="btn__color <?= $claseActivo ?>" data-id-color="<?= $color['id'] ?>"
+                                            style="background-color: <?= $color['hex'] ?>;" title="<?= $color['nombre'] ?>"
+                                            onclick="seleccionarColorTarjeta(this, 'item_<?= $uid ?>', '<?= $rutaJS ?>', '<?= $nombreJS ?>'); event.stopPropagation();">
+                                        </button>
+                                        <?php $esPrimero = false; endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="paquete__item_01">
+                                <button class="btn__paquete_seis activo"
+                                    onclick="cambiarPrecio('precio_item_<?= $uid ?>', 'seis', '<?= $uid ?>')">6</button>
+                                <button class="btn__paquete_doce"
+                                    onclick="cambiarPrecio('precio_item_<?= $uid ?>', 'doce', '<?= $uid ?>')">12</button>
                             </div>
                         </figure>
                     </div>
-                    <div class='info__item_01'>
-                        <h1>{$zapato['nombre_categoria']}</h1>
-                        <h2>{$zapato['nombre']}</h2>
-                        <p class='precio_01' id='precio_item_{$uid}' 
-                            data-precio-individual='{$precioFinal}' data-paquete-actual='seis'
-                            style='" . ($descuento > 0 ? "color:#e74c3c; font-weight:bold;" : "") . "'>
-                            $" . number_format($precioFinal * 6 * 0.9, 2) . "
-                            " . ($descuento > 0 ? "<span class='badge-descuento'>-{$descuento}%</span>" : "") . "
+
+                    <div class="info__item_01">
+                        <h1><?= htmlspecialchars($zapato['nombre_categoria']) ?></h1>
+                        <h2><?= htmlspecialchars($zapato['nombre']) ?></h2>
+                        <p class="precio_01" id="precio_item_<?= $uid ?>" data-precio-individual="<?= $precioFinal ?>"
+                            data-paquete-actual="seis"
+                            style="<?= ($descuento > 0) ? 'color:#e74c3c; font-weight:bold;' : '' ?>">
+                            $<?= number_format($precioFinal * 6 * 0.9, 2) ?>
+                            <?php if ($descuento > 0): ?>
+                                <span class="badge-descuento">-<?= $descuento ?>%</span>
+                            <?php endif; ?>
                         </p>
                     </div>
-                    <div class='seleccionar__cantidad_01'>
-                        <div class='cantidad__control_01'>
-                            <button class='btn__cantidad_menos_01' onclick=\"controlarCantidad('input_{$uid}', -1)\">-</button>
-                            <input id='input_{$uid}' type='text' value='1' class='input__cantidad_01' onkeypress='return soloNumeros(event)' onchange=\"validarEntrada('input_{$uid}')\">
-                            <button class='btn__cantidad_mas_01' onclick=\"controlarCantidad('input_{$uid}', 1)\">+</button>
+
+                    <div class="seleccionar__cantidad_01">
+                        <div class="cantidad__control_01">
+                            <button class="btn__cantidad_menos_01"
+                                onclick="controlarCantidad('input_<?= $uid ?>', -1)">-</button>
+                            <input id="input_<?= $uid ?>" type="text" value="1" class="input__cantidad_01"
+                                onkeypress="return soloNumeros(event)" onchange="validarEntrada('input_<?= $uid ?>')">
+                            <button class="btn__cantidad_mas_01"
+                                onclick="controlarCantidad('input_<?= $uid ?>', 1)">+</button>
                         </div>
-                         <button class='btn__carrito_01' onclick='abrirModalTallas(\"{$uid}\")'>
-                            <img src='../../Assets/Imagenes/Iconos/carrito-de-compras.png'> 
-                         </button>
+
+                        <button class="btn__carrito_01"
+                            onclick="abrirModalTallasConDatos('<?= $uid ?>', '<?= $nombreJS ?>', <?= $precioFinal ?>, '<?= $imgPrincipalAbs ?>', <?= $idCategoria ?>)">
+                            <img src="../../Assets/Imagenes/Iconos/carrito-de-compras.png">
+                        </button>
                     </div>
                 </article>
-                ";
+                <?php
             }
 
             while ($row = $resultado->fetch_assoc()) {
-                renderizarTarjetaBusqueda($row, $conexion);
+            renderizarTarjetaBusqueda($row, $conexion);
             }
             ?>
         </section>

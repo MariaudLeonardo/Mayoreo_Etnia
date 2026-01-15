@@ -22,8 +22,14 @@ if ($idUsuario) {
     LEFT JOIN ofertas o ON z.id_zapato = o.id_zapato AND o.estado = 1
     WHERE f.id_usuario = $idUsuario
     ORDER BY f.fecha_agregado DESC
-    "; 
+    ";
+
     $resultado = $conexion->query($sql);
+
+    function js_escape($string)
+    {
+        return str_replace(["\r", "\n", "'", '"'], ['', '', "\\'", '\\"'], $string);
+    }
 }
 ?>
 
@@ -144,6 +150,7 @@ if ($idUsuario) {
 
         <section class="layout__productos">
             <?php
+
             // CASO 1: NO LOGUEADO
             if (!$idUsuario) {
                 echo "
@@ -170,20 +177,19 @@ if ($idUsuario) {
             }
 
             // FUNCIÓN DE RENDERIZADO (Reutilizamos la lógica visual)
+            
+
             function renderizarTarjetaFavorito($zapato, $conexion)
             {
                 $id = $zapato['id_zapato'];
-
-                // CÁLCULO PRECIO (Considerando Oferta)
+                $idCategoria = intval($zapato['id_categoria']);
+                $nombreJS = js_escape($zapato['nombre']);
                 $precioNormal = floatval($zapato['precio']);
-                $descuento = intval($zapato['descuento']); // Puede ser NULL o 0
-                $precioFinal = $precioNormal;
+                $descuento = intval($zapato['descuento']);
+                $precioFinal = ($descuento > 0) ? $precioNormal - ($precioNormal * ($descuento / 100)) : $precioNormal;
+                $uid = $id . '_fav';
 
-                if ($descuento > 0) {
-                    $precioFinal = $precioNormal - ($precioNormal * ($descuento / 100));
-                }
-
-                // IMÁGENES
+                // 1. IMÁGENES: Normalización de rutas (\ -> /)
                 $stmt = $conexion->prepare("SELECT ruta, id_color FROM imagenes_zapato WHERE id_zapato = ? ORDER BY orden ASC");
                 $stmt->bind_param("i", $id);
                 $stmt->execute();
@@ -191,23 +197,27 @@ if ($idUsuario) {
                 $imagenesPorColor = [];
                 $todasLasImagenes = [];
                 while ($img = $resImg->fetch_assoc()) {
-                    $ruta = "../../" . $img['ruta'];
-                    if ($img['id_color'])
-                        $imagenesPorColor[$img['id_color']][] = $ruta;
-                    $todasLasImagenes[] = $ruta;
+                    $rutaLimpia = str_replace('\\', '/', $img['ruta']);
+                    $rutaVisual = "../../" . $rutaLimpia;
+                    if ($img['id_color']) {
+                        $imagenesPorColor[$img['id_color']][] = $rutaVisual;
+                    }
+                    $todasLasImagenes[] = $rutaVisual;
                 }
-                $imgPrincipal = $todasLasImagenes[0] ?? '../../Assets/Imagenes/default.png';
+                $imgPrincipalVisual = $todasLasImagenes[0] ?? '../../Assets/Imagenes/default.png';
+                $imgPrincipalAbs = str_replace('../../', '/Mayoreo_Etnia/', $imgPrincipalVisual);
 
-                // COLORES
+                // 2. COLORES: Mapeo id_color -> id (Vital para controlador.js)
                 $stmtC = $conexion->prepare("SELECT id_color, hex, nombre FROM colores_zapato WHERE id_zapato = ?");
                 $stmtC->bind_param("i", $id);
                 $stmtC->execute();
                 $resCol = $stmtC->get_result();
                 $coloresData = [];
-                while ($c = $resCol->fetch_assoc())
+                while ($c = $resCol->fetch_assoc()) {
                     $coloresData[] = ['id' => $c['id_color'], 'hex' => $c['hex'], 'nombre' => $c['nombre']];
+                }
 
-                // TALLAS
+                // 3. TALLAS
                 $stmtT = $conexion->prepare("SELECT t.valor FROM zapato_talla zt JOIN tallas t ON zt.id_talla = t.id_talla WHERE zt.id_zapato = ? ORDER BY t.valor");
                 $stmtT->bind_param("i", $id);
                 $stmtT->execute();
@@ -216,73 +226,88 @@ if ($idUsuario) {
                 while ($t = $resTal->fetch_assoc())
                     $tallas[] = floatval($t['valor']);
 
-                // JSON
+                // 4. JSON PARA POPUP
                 $jsonDatos = json_encode([
                     'id' => $id,
                     'nombre' => $zapato['nombre'],
                     'categoria' => $zapato['nombre_categoria'],
+                    'id_categoria' => $idCategoria,
                     'precio' => $precioFinal,
-                    'imagenPortada' => $imgPrincipal,
+                    'imagenPortada' => $imgPrincipalVisual,
                     'colores' => $coloresData,
                     'imagenesPorColor' => $imagenesPorColor,
                     'tallas' => $tallas
                 ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
 
-                // Estilo borde oferta
-                $estiloBorde = ($descuento > 0) ? "style='border: 2px solid #e74c3c;'" : "";
-                $uid = $id . '_fav';
+                ?>
+        <article class="container__item_01" style="<?= ($descuento > 0) ? 'border: 2px solid #e74c3c;' : '' ?> position:relative; background:white;">
+            <div class="img__item_01">
+                <figure style="position: relative;">
+                    <img id="item_<?= $uid ?>" src="<?= $imgPrincipalVisual ?>" 
+                         alt="<?= htmlspecialchars($zapato['nombre']) ?>" 
+                         onclick='abrirModalProducto(<?= $jsonDatos ?>)'>
+                
+                    <?php if ($descuento > 0): ?>
+                            <div class="etiqueta-flotante-oferta">-<?= $descuento ?>%</div>
+                    <?php endif; ?>
 
-                echo "
-                <article class='container__item_01' {$estiloBorde}>
-                    <div class='img__item_01'>
-                        <figure style='position:relative;'>
-                            <img id='item_{$uid}' src='{$imgPrincipal}' alt='{$zapato['nombre']}' onclick='abrirModalProducto({$jsonDatos})'>
-                            ";
-                if ($descuento > 0)
-                    echo "<div class='etiqueta-flotante-oferta'>-{$descuento}%</div>";
-
-                if (count($coloresData) > 1) {
-                    echo "<div class='colores__item_01'>";
-                    foreach ($coloresData as $color) {
-                        $rutaColor = $imagenesPorColor[$color['id']][0] ?? $imgPrincipal;
-                        $rutaJS = str_replace("'", "\\'", $rutaColor);
-                        echo "<button class='btn__color' style='background-color: {$color['hex']};' title='{$color['nombre']}' onclick=\"establecerImagen('item_{$uid}', '{$rutaJS}', 'Color'); event.stopPropagation();\"></button>";
-                    }
-                    echo "</div>";
-                }
-                echo "
-                            <div class='paquete__item_01'>
-                                 <button class='btn__paquete_seis activo' onclick=\"cambiarPrecio('precio_item_{$uid}', 'seis', '{$uid}')\">6</button>
-                                 <button class='btn__paquete_doce' onclick=\"cambiarPrecio('precio_item_{$uid}', 'doce', '{$uid}')\">12</button>
+                    <?php if (count($coloresData) > 0): ?>
+                            <div class="colores__item_01" <?= (count($coloresData) === 1) ? 'style="display:none;"' : '' ?>>
+                                <?php
+                                $esPrimero = true;
+                                foreach ($coloresData as $color):
+                                    $rutaC = $imagenesPorColor[$color['id']][0] ?? $imgPrincipalVisual;
+                                    $rutaJS = js_escape($rutaC);
+                                    $claseActivo = $esPrimero ? 'activo' : '';
+                                    ?>
+                                        <button class="btn__color <?= $claseActivo ?>" 
+                                                data-id-color="<?= $color['id'] ?>"
+                                                style="background-color: <?= $color['hex'] ?>;" 
+                                                title="<?= $color['nombre'] ?>"
+                                                onclick="seleccionarColorTarjeta(this, 'item_<?= $uid ?>', '<?= $rutaJS ?>', '<?= $nombreJS ?>'); event.stopPropagation();">
+                                        </button>
+                                    <?php $esPrimero = false; endforeach; ?>
                             </div>
-                        </figure>
+                    <?php endif; ?>
+
+                    <div class="paquete__item_01">
+                         <button class="btn__paquete_seis activo" onclick="cambiarPrecio('precio_item_<?= $uid ?>', 'seis', '<?= $uid ?>')">6</button>
+                         <button class="btn__paquete_doce" onclick="cambiarPrecio('precio_item_<?= $uid ?>', 'doce', '<?= $uid ?>')">12</button>
                     </div>
-                    
-                    <div class='info__item_01'>
-                        <h1>{$zapato['nombre_categoria']}</h1>
-                        <h2>{$zapato['nombre']}</h2>
-                        <p class='precio_01' id='precio_item_{$uid}' 
-                            data-precio-individual='{$precioFinal}' data-paquete-actual='seis'
-                            style='" . ($descuento > 0 ? "color:#e74c3c; font-weight:bold;" : "") . "'>
-                            $" . number_format($precioFinal * 6 * 0.9, 2) . " 
-                            " . ($descuento > 0 ? "<span class='badge-descuento'>-{$descuento}%</span>" : "") . "
-                        </p>
-                    </div>
-                    
-                    <div class='seleccionar__cantidad_01'>
-                        <div class='cantidad__control_01'>
-                            <button class='btn__cantidad_menos_01' onclick=\"controlarCantidad('input_{$uid}', -1)\">-</button>
-                            <input id='input_{$uid}' type='text' value='1' class='input__cantidad_01' onkeypress='return soloNumeros(event)' onchange=\"validarEntrada('input_{$uid}')\">
-                            <button class='btn__cantidad_mas_01' onclick=\"controlarCantidad('input_{$uid}', 1)\">+</button>
-                        </div>
-                         <button class='btn__carrito_01' onclick='abrirModalTallas(\"{$uid}\")'>
-                            <img src='../../Assets/Imagenes/Iconos/carrito-de-compras.png'> 
-                         </button>
-                    </div>
-                </article>
-                ";
+                </figure>
+            </div>
+
+            <div class="info__item_01">
+                <h1><?= htmlspecialchars($zapato['nombre_categoria']) ?></h1>
+                <h2><?= htmlspecialchars($zapato['nombre']) ?></h2>
+                <p class="precio_01" id="precio_item_<?= $uid ?>" 
+                   data-precio-individual="<?= $precioFinal ?>" data-paquete-actual="seis"
+                   style="<?= ($descuento > 0) ? 'color:#e74c3c; font-weight:bold;' : '' ?>">
+                    $<?= number_format($precioFinal * 6 * 0.9, 2) ?>
+                    <?php if ($descuento > 0): ?>
+                            <span class="badge-descuento">-<?= $descuento ?>%</span>
+                    <?php endif; ?>
+                </p>
+            </div>
+
+            <div class="seleccionar__cantidad_01">
+                <div class="cantidad__control_01">
+                    <button class="btn__cantidad_menos_01" onclick="controlarCantidad('input_<?= $uid ?>', -1)">-</button>
+                    <input id="input_<?= $uid ?>" type="text" value="1" class="input__cantidad_01" 
+                           onkeypress="return soloNumeros(event)" onchange="validarEntrada('input_<?= $uid ?>')">
+                    <button class="btn__cantidad_mas_01" onclick="controlarCantidad('input_<?= $uid ?>', 1)">+</button>
+                </div>
+            
+                <button class="btn__carrito_01" 
+                        onclick="abrirModalTallasConDatos('<?= $uid ?>', '<?= $nombreJS ?>', <?= $precioFinal ?>, '<?= $imgPrincipalAbs ?>', <?= $idCategoria ?>)">
+                    <img src="../../Assets/Imagenes/Iconos/carrito-de-compras.png"> 
+                </button>
+            </div>
+        </article>
+        <?php
             }
             ?>
+            
         </section>
     </main>
 
