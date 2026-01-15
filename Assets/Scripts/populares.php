@@ -3,6 +3,7 @@ session_start();
 require_once "conexion.php";
 
 // 1. CONSULTA DE POPULARES CON OFERTAS
+// 1. CONSULTA DE POPULARES CON TODAS SUS POSICIONES
 $sql = "
 SELECT 
     z.id_zapato, z.nombre, z.precio, z.id_categoria, c.nombre AS nombre_categoria,    
@@ -220,21 +221,19 @@ function js_escape($string)
         // Función corregida usando el estilo del INDEX (cerrando PHP)
         function renderizarTarjeta($zapato, $conexion, $clasePodio = '')
         {
-            $id = $zapato['id_zapato']; // ID de la base de datos (ej: 1)
-            
-            // 1. VARIABLES SEGURAS (Igual que en el Index)
+            $id = $zapato['id_zapato'];
+            $orden = $zapato['orden']; // Asignamos el orden para el label
+            $uid = $id . '_' . $orden; // Creamos el UID para evitar IDs duplicados
+        
             $idCategoria = intval($zapato['id_categoria']);
             $nombreJS = js_escape($zapato['nombre']);
 
-            // 2. PRECIO
+            // Precios
             $precioNormal = floatval($zapato['precio']);
             $descuento = intval($zapato['descuento']);
-            $precioFinal = $precioNormal;
-            if ($descuento > 0) {
-                $precioFinal = $precioNormal - ($precioNormal * ($descuento / 100));
-            }
+            $precioFinal = ($descuento > 0) ? $precioNormal - ($precioNormal * ($descuento / 100)) : $precioNormal;
 
-            // 3. IMÁGENES
+            // IMÁGENES: Mismo sistema que en Ofertas pero normalizando barras
             $stmt = $conexion->prepare("SELECT ruta, id_color FROM imagenes_zapato WHERE id_zapato = ? ORDER BY orden ASC");
             $stmt->bind_param("i", $id);
             $stmt->execute();
@@ -244,31 +243,33 @@ function js_escape($string)
             $todasLasImagenes = [];
 
             while ($img = $resImg->fetch_assoc()) {
-                $rutaVisual = "../../" . $img['ruta'];
-                $rutaAbsoluta = "/Mayoreo_Etnia/" . $img['ruta'];
-
+                // CORRECCIÓN CRÍTICA: Cambiamos barras invertidas por normales para que el JS no falle
+                $rutaLimpia = str_replace('\\', '/', $img['ruta']);
+                $rutaVisual = "../../" . $rutaLimpia;
+                
                 if ($img['id_color']) {
-                    $imagenesPorColor[$img['id_color']]['visual'][] = $rutaVisual;
-                    $imagenesPorColor[$img['id_color']]['abs'][] = $rutaAbsoluta;
+                    // Estructura idéntica a ofertas.php
+                    $imagenesPorColor[$img['id_color']][] = $rutaVisual;
                 }
-                $todasLasImagenes['visual'][] = $rutaVisual;
-                $todasLasImagenes['abs'][] = $rutaAbsoluta;
+                $todasLasImagenes[] = $rutaVisual;
             }
 
-            $imgPrincipalVisual = $todasLasImagenes['visual'][0] ?? '../../Assets/Imagenes/default.png';
-            $imgPrincipalAbs = $todasLasImagenes['abs'][0] ?? '/Mayoreo_Etnia/Assets/Imagenes/default.png';
+            $imgPrincipalVisual = $todasLasImagenes[0] ?? '../../Assets/Imagenes/default.png';
+            // FIJAMOS LA VARIABLE: Ahora $imgPrincipalAbs existe y tiene la ruta correcta
+            $imgPrincipalAbs = str_replace('../../', '/Mayoreo_Etnia/', $imgPrincipalVisual);
 
-            // 4. COLORES
+            // 4. COLORES (Igual que en ofertas.php)
             $stmtC = $conexion->prepare("SELECT id_color, hex, nombre FROM colores_zapato WHERE id_zapato = ?");
             $stmtC->bind_param("i", $id);
             $stmtC->execute();
             $resCol = $stmtC->get_result();
             $coloresData = [];
             while ($c = $resCol->fetch_assoc()) {
-                $coloresData[] = $c;
+                // CAMBIO CLAVE: Renombramos 'id_color' a 'id'
+                $coloresData[] = ['id' => $c['id_color'], 'hex' => $c['hex'], 'nombre' => $c['nombre']];
             }
 
-            // 5. TALLAS
+            // Tallas
             $stmtT = $conexion->prepare("SELECT t.valor FROM zapato_talla zt JOIN tallas t ON zt.id_talla = t.id_talla WHERE zt.id_zapato = ? ORDER BY t.valor");
             $stmtT->bind_param("i", $id);
             $stmtT->execute();
@@ -278,57 +279,56 @@ function js_escape($string)
                 $tallas[] = floatval($t['valor']);
             }
 
-            // JSON PARA EL MODAL DE DETALLES
+            // JSON PARA EL MODAL (Incluimos el mapa de imágenes que activa el cambio de color)
             $jsonDatos = json_encode([
                 'id' => $id,
                 'nombre' => $zapato['nombre'],
                 'categoria' => $zapato['nombre_categoria'],
+                'id_categoria' => $idCategoria, // Importante para paquetes
                 'precio' => $precioFinal,
                 'imagenPortada' => $imgPrincipalVisual,
-                'colores' => $coloresData,
+                'colores' => $coloresData, // Debe tener la clave 'id' (ya lo tienes corregido arriba)
+                'imagenesPorColor' => $imagenesPorColor, // Array limpio generado en el paso 1
                 'tallas' => $tallas
             ], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE);
 
             $estiloBorde = ($descuento > 0) ? 'border: 2px solid #e74c3c;' : '';
 
-            // --- HTML LIMPIO (Copiado del Index usando $id en lugar de $uid) ---
+            // --- HTML LIMPIO (Usando $uid para que no haya errores de consola) ---
             ?>
-            <article class="container__item_01 <?= $clasePodio ?>" style="<?= $estiloBorde ?> position:relative; background:white;">
+            <article class="container__item_01 <?= $clasePodio ?>"
+                style="<?= $estiloBorde ?> position:relative; background:white;">
                 <div class="img__item_01">
                     <figure style="position: relative;">
-                        <img id="item_<?= $id ?>" src="<?= $imgPrincipalVisual ?>"
-                             alt="<?= htmlspecialchars($zapato['nombre']) ?>"
-                             onclick='abrirModalProducto(<?= $jsonDatos ?>)'>
-                        
-                        <div class="etiqueta-lugar">#<?= $zapato['orden'] ?></div>
-
+                        <img id="item_<?= $uid ?>" src="<?= $imgPrincipalVisual ?>"
+                            alt="<?= htmlspecialchars($zapato['nombre']) ?>"
+                            onclick='abrirModalProducto(<?= $jsonDatos ?>)'>
+                        <div class="etiqueta-lugar">#<?= $orden ?></div>
                         <?php if ($descuento > 0): ?>
-                            <div class="etiqueta-flotante-oferta">-<?= $descuento ?>%</div>
-                        <?php endif; ?>
+                            <div class="etiqueta-flotante-oferta">-<?= $descuento ?>%</div><?php endif; ?>
 
                         <?php if (count($coloresData) > 1): ?>
                             <div class="colores__item_01">
                                 <?php
                                 $esPrimero = true;
                                 foreach ($coloresData as $color):
-                                    $rutaC = $imagenesPorColor[$color['id_color']]['visual'][0] ?? $imgPrincipalVisual;
+                                    $rutaC = $imagenesPorColor[$color['id']][0] ?? $imgPrincipalVisual;
                                     $rutaJS = js_escape($rutaC);
                                     $claseActivo = $esPrimero ? 'activo' : '';
                                     ?>
-                                    <button class="btn__color <?= $claseActivo ?>" data-id-color="<?= $color['id_color'] ?>"
-                                            style="background-color: <?= $color['hex'] ?>;" title="<?= $color['nombre'] ?>"
-                                            onclick="seleccionarColorTarjeta(this, 'item_<?= $id ?>', '<?= $rutaJS ?>', '<?= $nombreJS ?>'); event.stopPropagation();">
+                                    <button class="btn__color <?= $claseActivo ?>" data-id-color="<?= $color['id'] ?>"
+                                        style="background-color: <?= $color['hex'] ?>;" title="<?= $color['nombre'] ?>"
+                                        onclick="seleccionarColorTarjeta(this, 'item_<?= $uid ?>', '<?= $rutaJS ?>', '<?= $nombreJS ?>'); event.stopPropagation();">
                                     </button>
-                                    <?php
-                                    $esPrimero = false;
-                                endforeach;
-                                ?>
+                                    <?php $esPrimero = false; endforeach; ?>
                             </div>
                         <?php endif; ?>
 
                         <div class="paquete__item_01">
-                             <button class="btn__paquete_seis activo" onclick="cambiarPrecio('precio_item_<?= $id ?>', 'seis', <?= $id ?>)">6</button>
-                             <button class="btn__paquete_doce" onclick="cambiarPrecio('precio_item_<?= $id ?>', 'doce', <?= $id ?>)">12</button>
+                            <button class="btn__paquete_seis activo"
+                                onclick="cambiarPrecio('precio_item_<?= $uid ?>', 'seis', '<?= $uid ?>')">6</button>
+                            <button class="btn__paquete_doce"
+                                onclick="cambiarPrecio('precio_item_<?= $uid ?>', 'doce', '<?= $uid ?>')">12</button>
                         </div>
                     </figure>
                 </div>
@@ -336,26 +336,23 @@ function js_escape($string)
                 <div class="info__item_01">
                     <h1><?= htmlspecialchars($zapato['nombre_categoria']) ?></h1>
                     <h2><?= htmlspecialchars($zapato['nombre']) ?></h2>
-                    <p class="precio_01" id="precio_item_<?= $id ?>" data-precio-individual="<?= $precioFinal ?>"
+                    <p class="precio_01" id="precio_item_<?= $uid ?>" data-precio-individual="<?= $precioFinal ?>"
                         data-paquete-actual="seis"
                         style="<?= ($descuento > 0) ? 'color:#e74c3c; font-weight:bold;' : '' ?>">
                         $<?= number_format($precioFinal * 6 * 0.9, 2) ?>
-                        <?php if ($descuento > 0): ?>
-                            <span class="badge-descuento">-<?= $descuento ?>%</span>
-                        <?php endif; ?>
                     </p>
                 </div>
 
                 <div class="seleccionar__cantidad_01">
                     <div class="cantidad__control_01">
-                        <button class="btn__cantidad_menos_01" onclick="controlarCantidad('input_<?= $id ?>', -1)">-</button>
-                        <input id="input_<?= $id ?>" type="text" value="1" class="input__cantidad_01"
-                               onkeypress="return soloNumeros(event)" onchange="validarEntrada('input_<?= $id ?>')">
-                        <button class="btn__cantidad_mas_01" onclick="controlarCantidad('input_<?= $id ?>', 1)">+</button>
+                        <button class="btn__cantidad_menos_01"
+                            onclick="controlarCantidad('input_<?= $uid ?>', -1)">-</button>
+                        <input id="input_<?= $uid ?>" type="text" value="1" class="input__cantidad_01"
+                            onkeypress="return soloNumeros(event)" onchange="validarEntrada('input_<?= $uid ?>')">
+                        <button class="btn__cantidad_mas_01" onclick="controlarCantidad('input_<?= $uid ?>', 1)">+</button>
                     </div>
-
                     <button class="btn__carrito_01"
-                            onclick="abrirModalTallasConDatos(<?= $id ?>, '<?= $nombreJS ?>', <?= $precioFinal ?>, '<?= $imgPrincipalAbs ?>', <?= $idCategoria ?>)">
+                        onclick="abrirModalTallasConDatos('<?= $uid ?>', '<?= $nombreJS ?>', <?= $precioFinal ?>, '<?= $imgPrincipalAbs ?>', <?= $idCategoria ?>)">
                         <img src="../../Assets/Imagenes/Iconos/carrito-de-compras.png">
                     </button>
                 </div>

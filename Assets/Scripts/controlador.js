@@ -829,14 +829,20 @@ function modalAgregarAlCarrito() {
 
     const imgActual = document.getElementById('modalImagenPrincipal').src;
 
+    // --- CAMBIO AQUÍ: Capturamos tanto el NOMBRE como el ID ---
     let nombreColorReal = "Estándar";
+    let idColorReal = null; // <--- Nueva variable
+
     if (modalProductoActual.colores && modalProductoActual.colores[modalColorSeleccionado]) {
         nombreColorReal = modalProductoActual.colores[modalColorSeleccionado].nombre;
+        idColorReal = modalProductoActual.colores[modalColorSeleccionado].id; // <--- Capturamos el ID real
     }
 
     const config = {
         metaTotal: metaTotal,
         basePaquete: paresPorPaquete,
+        id_categoria: modalProductoActual.id_categoria, // Aseguramos que pase la categoría
+        idColor: idColorReal, // <--- PASAMOS EL ID AL SIGUIENTE MODAL
         infoVisual: {
             nombre: modalProductoActual.nombre,
             imagen: imgActual,
@@ -846,7 +852,6 @@ function modalAgregarAlCarrito() {
     };
 
     cerrarModalProducto();
-    // Llamada segura al modal de tallas
     setTimeout(() => {
         abrirModalTallas(modalProductoActual.id, config);
     }, 100);
